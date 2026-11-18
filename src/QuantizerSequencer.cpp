@@ -1,5 +1,6 @@
 #include "plugin.hpp"
 #include <cmath>
+#include <cstdlib>
 
 
 static const int NUM_STEPS = 8;
@@ -166,6 +167,36 @@ struct QuantizerSequencer : Module {
 };
 
 
+// Panel colours.
+static const NVGcolor COLOR_TEXT = nvgRGB(0xff, 0xff, 0xff);
+static const NVGcolor COLOR_BLUE = nvgRGB(0x1e, 0x90, 0xff);       // LEDs and lit white keys
+static const NVGcolor COLOR_BLUE_DARK = nvgRGB(0x10, 0x60, 0xd8);  // lit black keys
+
+
+/** Bright blue LED used for the step indicators. */
+template <typename TBase = GrayModuleLightWidget>
+struct TBrightBlueLight : TBase {
+	TBrightBlueLight() {
+		this->addBaseColor(COLOR_BLUE);
+	}
+};
+using BrightBlueLight = TBrightBlueLight<>;
+
+
+/** Franklin Gothic Medium ships with Windows. Fall back to Rack's own font if it can't be loaded. */
+static std::shared_ptr<window::Font> loadPanelFont() {
+	std::shared_ptr<window::Font> font;
+#if defined ARCH_WIN
+	const char* windir = std::getenv("WINDIR");
+	std::string fontsDir = std::string(windir ? windir : "C:/Windows") + "/Fonts/framd.ttf";
+	font = APP->window->loadFont(fontsDir);
+#endif
+	if (!font)
+		font = APP->window->loadFont(asset::system("res/fonts/DejaVuSans.ttf"));
+	return font;
+}
+
+
 /** One latching piano key. Clicking toggles the note in or out of that step's scale. */
 struct PianoKey : app::Switch {
 	QuantizerSequencer* module = nullptr;
@@ -178,10 +209,15 @@ struct PianoKey : app::Switch {
 		bool on = pq ? pq->getValue() > 0.5f : DEFAULT_SCALE[note];
 
 		NVGcolor fill;
-		if (black)
-			fill = on ? nvgRGB(0xd9, 0x7a, 0x00) : nvgRGB(0x26, 0x28, 0x2e);
-		else
-			fill = on ? nvgRGB(0xff, 0xb8, 0x4d) : nvgRGB(0xf6, 0xf3, 0xec);
+		NVGcolor stroke;
+		if (black) {
+			fill = on ? COLOR_BLUE_DARK : nvgRGB(0x2a, 0x2a, 0x2a);
+			stroke = nvgRGB(0x80, 0x80, 0x80);
+		}
+		else {
+			fill = on ? COLOR_BLUE : nvgRGB(0xea, 0xea, 0xea);
+			stroke = nvgRGB(0x00, 0x00, 0x00);
+		}
 
 		// Columns beyond the sequence length are faded out.
 		if (module && step >= module->displayLength)
@@ -191,7 +227,7 @@ struct PianoKey : app::Switch {
 		nvgRoundedRect(args.vg, 0.4f, 0.4f, box.size.x - 0.8f, box.size.y - 0.8f, 1.2f);
 		nvgFillColor(args.vg, fill);
 		nvgFill(args.vg);
-		nvgStrokeColor(args.vg, nvgRGB(0x4a, 0x4d, 0x55));
+		nvgStrokeColor(args.vg, stroke);
 		nvgStrokeWidth(args.vg, 0.8f);
 		nvgStroke(args.vg);
 
@@ -201,34 +237,32 @@ struct PianoKey : app::Switch {
 			float cx = black ? box.size.x / 2 : box.size.x - r * 2.2f;
 			nvgBeginPath(args.vg);
 			nvgCircle(args.vg, cx, box.size.y / 2, r);
-			nvgFillColor(args.vg, nvgRGB(0xd0, 0x1c, 0x1c));
+			nvgFillColor(args.vg, nvgRGB(0xff, 0xff, 0xff));
 			nvgFill(args.vg);
 		}
 	}
 };
 
 
-/** A text label drawn with Rack's built-in font, since panel SVG <text> is not rendered. */
+/** A text label drawn in code, since panel SVG <text> is not rendered by Rack. */
 struct PanelLabel : TransparentWidget {
 	std::string text;
 	float fontSize;
-	NVGcolor color;
 
-	PanelLabel(Vec centerMm, std::string text, float fontSize, NVGcolor color) {
+	PanelLabel(Vec centerMm, std::string text, float fontSize) {
 		this->text = text;
 		this->fontSize = fontSize;
-		this->color = color;
-		box.size = mm2px(Vec(20.f, 5.f));
+		box.size = mm2px(Vec(20.f, 6.f));
 		box.pos = mm2px(centerMm).minus(box.size.div(2));
 	}
 
 	void draw(const DrawArgs& args) override {
-		std::shared_ptr<window::Font> font = APP->window->loadFont(asset::system("res/fonts/DejaVuSans.ttf"));
+		std::shared_ptr<window::Font> font = loadPanelFont();
 		if (!font)
 			return;
 		nvgFontFaceId(args.vg, font->handle);
 		nvgFontSize(args.vg, fontSize);
-		nvgFillColor(args.vg, color);
+		nvgFillColor(args.vg, COLOR_TEXT);
 		nvgTextAlign(args.vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
 		nvgText(args.vg, box.size.x / 2, box.size.y / 2, text.c_str(), NULL);
 	}
@@ -238,17 +272,20 @@ struct PanelLabel : TransparentWidget {
 struct QuantizerSequencerWidget : ModuleWidget {
 	// Keyboard geometry (mm). Each column is a piano keyboard rotated so C is at the bottom
 	// and the black keys sit on the left.
-	static constexpr float COL_X0 = 4.72f;      // left edge of column 1
-	static constexpr float COL_PITCH = 10.5f;   // distance between columns
-	static constexpr float KEY_W = 8.5f;        // white key width
+	static constexpr float COL_X0 = 5.8f;       // left edge of column 1
+	static constexpr float COL_PITCH = 11.5f;   // distance between columns
+	static constexpr float KEY_W = 9.5f;        // white key width
 	static constexpr float KEY_H = 7.f;         // white key height
-	static constexpr float BLACK_W = 5.2f;
+	static constexpr float BLACK_W = 5.8f;
 	static constexpr float BLACK_H = 4.4f;
-	static constexpr float KB_TOP = 22.f;       // top of the keyboard (the B key)
+	static constexpr float KB_TOP = 23.f;       // top of the keyboard (the B key)
 
-	void label(float xMm, float yMm, std::string text, float size = 7.f, bool light = false) {
-		NVGcolor color = light ? nvgRGB(0xe8, 0xe4, 0xdc) : nvgRGB(0x2b, 0x2f, 0x36);
-		addChild(new PanelLabel(Vec(xMm, yMm), text, size, color));
+	// Text sizes (px).
+	static constexpr float TITLE_SIZE = 15.f;
+	static constexpr float LABEL_SIZE = 10.f;
+
+	void label(float xMm, float yMm, std::string text, float size = LABEL_SIZE) {
+		addChild(new PanelLabel(Vec(xMm, yMm), text, size));
 	}
 
 	void addKey(QuantizerSequencer* module, int s, int n, Vec posMm, Vec sizeMm) {
@@ -264,19 +301,19 @@ struct QuantizerSequencerWidget : ModuleWidget {
 		setModule(module);
 		setPanel(createPanel(asset::plugin(pluginInstance, "res/QuantizerSequencer.svg")));
 
-		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
-		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
-		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+		addChild(createWidget<ScrewBlack>(Vec(RACK_GRID_WIDTH, 0)));
+		addChild(createWidget<ScrewBlack>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
+		addChild(createWidget<ScrewBlack>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+		addChild(createWidget<ScrewBlack>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-		label(45.72f, 6.f, "QSEQ 8", 11.f, true);
+		label(50.8f, 6.f, "QSEQ 8", TITLE_SIZE);
 
 		const float kbBottom = KB_TOP + 7 * KEY_H;
 		for (int s = 0; s < NUM_STEPS; s++) {
 			float x = COL_X0 + s * COL_PITCH;
 			float cx = x + KEY_W / 2;
-			label(cx, 14.5f, std::to_string(s + 1), 6.5f);
-			addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(cx, 18.5f)), module, QuantizerSequencer::STEP_LIGHT + s));
+			label(cx, 14.5f, std::to_string(s + 1));
+			addChild(createLightCentered<MediumLight<BrightBlueLight>>(mm2px(Vec(cx, 19.f)), module, QuantizerSequencer::STEP_LIGHT + s));
 
 			// White keys first, then black keys on top, so the black keys get clicks where they overlap.
 			int whiteIndex = 0;
@@ -298,24 +335,25 @@ struct QuantizerSequencerWidget : ModuleWidget {
 				addKey(module, s, n, Vec(x, boundaryY - BLACK_H / 2), Vec(BLACK_W, BLACK_H));
 			}
 		}
-		label(2.4f, kbBottom - KEY_H / 2, "C", 5.f);
+		label(2.9f, kbBottom - KEY_H / 2, "C", 8.f);
 
-		// Jacks.
-		// Step controls | quantizer inputs | output.
-		label(9.f, 92.f, "CLOCK", 6.5f);
-		label(19.5f, 92.f, "RESET", 6.5f);
-		label(30.f, 92.f, "LENGTH", 6.f);
-		label(40.5f, 92.f, "SCALE", 6.5f);
-		label(52.5f, 92.f, "CV IN", 6.5f);
-		label(63.f, 92.f, "S&H", 6.5f);
-		label(79.5f, 92.f, "OUT", 7.f, true);
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(9.f, 101.f)), module, QuantizerSequencer::CLOCK_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(19.5f, 101.f)), module, QuantizerSequencer::RESET_INPUT));
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(30.f, 101.f)), module, QuantizerSequencer::LENGTH_PARAM));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(40.5f, 101.f)), module, QuantizerSequencer::SELECT_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(52.5f, 101.f)), module, QuantizerSequencer::CV_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(63.f, 101.f)), module, QuantizerSequencer::SH_INPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(79.5f, 101.f)), module, QuantizerSequencer::CV_OUTPUT));
+		// Jacks: step controls | quantizer inputs | output.
+		const float labelY = 90.5f;
+		const float jackY = 100.5f;
+		label(10.f, labelY, "CLOCK");
+		label(22.f, labelY, "RESET");
+		label(34.f, labelY, "LENGTH");
+		label(46.f, labelY, "SCALE");
+		label(60.f, labelY, "CV IN");
+		label(72.f, labelY, "S&H");
+		label(89.f, labelY, "OUT");
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10.f, jackY)), module, QuantizerSequencer::CLOCK_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(22.f, jackY)), module, QuantizerSequencer::RESET_INPUT));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(34.f, jackY)), module, QuantizerSequencer::LENGTH_PARAM));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(46.f, jackY)), module, QuantizerSequencer::SELECT_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(60.f, jackY)), module, QuantizerSequencer::CV_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(72.f, jackY)), module, QuantizerSequencer::SH_INPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(89.f, jackY)), module, QuantizerSequencer::CV_OUTPUT));
 	}
 };
 

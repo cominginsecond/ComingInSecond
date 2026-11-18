@@ -30,3 +30,21 @@ create_plugin(
     SOURCE_ASSETS   ${CMAKE_CURRENT_LIST_DIR}/assets
     DESTINATION     ${CMAKE_CURRENT_LIST_DIR}/metamodule-plugins
 )
+
+# The SDK always writes <slug>.mmplugin. Rename it to <slug>-v<version>.mmplugin, the
+# name 4ms requires for releases, using the version from plugin.json. PLUGIN_NAME itself
+# must stay equal to the slug, since it is also the folder the plugin unpacks into.
+file(READ ${SOURCE_DIR}/plugin.json PLUGIN_JSON_TEXT)
+string(JSON PLUGIN_SLUG GET "${PLUGIN_JSON_TEXT}" slug)
+string(JSON PLUGIN_VERSION GET "${PLUGIN_JSON_TEXT}" version)
+# Re-run this configure step when plugin.json changes, so a version bump is picked up.
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${SOURCE_DIR}/plugin.json)
+
+add_custom_command(TARGET plugin POST_BUILD
+    COMMAND ${CMAKE_COMMAND}
+        -DDIR=${CMAKE_CURRENT_LIST_DIR}/metamodule-plugins
+        -DSLUG=${PLUGIN_SLUG}
+        -DVERSION=${PLUGIN_VERSION}
+        -P ${CMAKE_CURRENT_LIST_DIR}/rename-plugin.cmake
+    VERBATIM
+)

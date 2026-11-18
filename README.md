@@ -88,7 +88,8 @@ cmake --fresh -B build -G Ninja -DMETAMODULE_SDK_DIR=/path/to/metamodule-plugin-
 cmake --build build
 ```
 
-The plugin is written to `metamodule/metamodule-plugins/ComingInSecond.mmplugin`.
+The plugin is written to `metamodule/metamodule-plugins/ComingInSecond-v<version>.mmplugin`,
+using the version from `plugin.json`. That is the file name 4ms requires for releases.
 
 The MetaModule build compiles the same source as the VCV build. MetaModule-specific
 code is behind `#ifdef METAMODULE`. On MetaModule, the piano keys are image-based

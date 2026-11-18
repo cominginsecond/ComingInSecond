@@ -10,3 +10,7 @@
 /build
 /dep
 /dist
+
+# MetaModule build output
+/metamodule/build
+/metamodule/metamodule-plugins

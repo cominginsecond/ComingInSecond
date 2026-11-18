@@ -186,7 +186,7 @@ using BrightBlueLight = TBrightBlueLight<>;
 /** Franklin Gothic Medium ships with Windows. Fall back to Rack's own font if it can't be loaded. */
 static std::shared_ptr<window::Font> loadPanelFont() {
 	std::shared_ptr<window::Font> font;
-#if defined ARCH_WIN
+#if defined ARCH_WIN && !defined METAMODULE
 	const char* windir = std::getenv("WINDIR");
 	std::string fontsDir = std::string(windir ? windir : "C:/Windows") + "/Fonts/framd.ttf";
 	font = APP->window->loadFont(fontsDir);
@@ -197,11 +197,69 @@ static std::shared_ptr<window::Font> loadPanelFont() {
 }
 
 
+#ifdef METAMODULE
+/** MetaModule version of a piano key. The MetaModule engine draws param widgets itself and
+ignores draw() overrides, so the key uses two image frames (off/on). The SDK maps
+res/keys/NAME.svg to the PNGs in metamodule/assets/keys. The playing-note dot and the dimming of
+unused columns are drawn by KeyboardOverlay instead. */
+struct PianoKey : app::SvgSwitch {
+	QuantizerSequencer* module = nullptr;
+	int step = 0;
+	int note = 0;
+
+	void initFrames() {
+		const char* color = IS_BLACK[note] ? "black" : "white";
+		addFrame(Svg::load(asset::plugin(pluginInstance, string::f("res/keys/%s-off.svg", color))));
+		addFrame(Svg::load(asset::plugin(pluginInstance, string::f("res/keys/%s-on.svg", color))));
+	}
+};
+
+
+/** Draws on top of the keyboard: the white dot on the note being output, and darkening over
+columns past the sequence length. */
+struct KeyboardOverlay : TransparentWidget {
+	QuantizerSequencer* module = nullptr;
+	// Key rectangles in px, relative to this widget.
+	Rect keyRect[NUM_STEPS][NUM_NOTES];
+
+	void draw(const DrawArgs& args) override {
+		if (!module)
+			return;
+		int length = module->displayLength;
+		int step = module->displayStep;
+		int note = module->displayNote;
+
+		for (int s = length; s < NUM_STEPS; s++) {
+			// The C key is the bottom of the column and the B key the top.
+			Rect bottom = keyRect[s][0];
+			Rect top = keyRect[s][NUM_NOTES - 1];
+			nvgBeginPath(args.vg);
+			nvgRect(args.vg, top.pos.x, top.pos.y, bottom.size.x, bottom.pos.y + bottom.size.y - top.pos.y);
+			nvgFillColor(args.vg, nvgRGBA(0x00, 0x00, 0x00, 0xb0));
+			nvgFill(args.vg);
+		}
+
+		if (step >= 0 && step < NUM_STEPS && note >= 0 && note < NUM_NOTES &&
+			module->params[QuantizerSequencer::KEY_PARAM + step * NUM_NOTES + note].getValue() > 0.5f) {
+			Rect r = keyRect[step][note];
+			float radius = std::min(r.size.x, r.size.y) * 0.18f;
+			float cx = IS_BLACK[note] ? r.pos.x + r.size.x / 2 : r.pos.x + r.size.x - radius * 2.2f;
+			nvgBeginPath(args.vg);
+			nvgCircle(args.vg, cx, r.pos.y + r.size.y / 2, radius);
+			nvgFillColor(args.vg, nvgRGB(0xff, 0xff, 0xff));
+			nvgFill(args.vg);
+		}
+	}
+};
+#else
 /** One latching piano key. Clicking toggles the note in or out of that step's scale. */
 struct PianoKey : app::Switch {
 	QuantizerSequencer* module = nullptr;
 	int step = 0;
 	int note = 0;
+
+	// Only the MetaModule key uses image frames.
+	void initFrames() {}
 
 	void draw(const DrawArgs& args) override {
 		bool black = IS_BLACK[note];
@@ -246,6 +304,7 @@ struct PianoKey : app::Switch {
 		}
 	}
 };
+#endif
 
 
 /** A text label drawn in code, since panel SVG <text> is not rendered by Rack. */
@@ -262,7 +321,7 @@ struct PanelLabel : TransparentWidget {
 
 	void draw(const DrawArgs& args) override {
 		std::shared_ptr<window::Font> font = loadPanelFont();
-		if (!font)
+		if (!font || font->handle < 0)
 			return;
 		nvgFontFaceId(args.vg, font->handle);
 		nvgFontSize(args.vg, fontSize);
@@ -292,13 +351,22 @@ struct QuantizerSequencerWidget : ModuleWidget {
 		addChild(new PanelLabel(Vec(xMm, yMm), text, size));
 	}
 
+#ifdef METAMODULE
+	KeyboardOverlay* overlay = nullptr;
+#endif
+
 	void addKey(QuantizerSequencer* module, int s, int n, Vec posMm, Vec sizeMm) {
 		PianoKey* key = createParam<PianoKey>(mm2px(posMm), module, QuantizerSequencer::KEY_PARAM + s * NUM_NOTES + n);
-		key->box.size = mm2px(sizeMm);
 		key->module = module;
 		key->step = s;
 		key->note = n;
+		key->initFrames();
+		// Set the size after the frames, since adding a frame resizes the widget to the image.
+		key->box.size = mm2px(sizeMm);
 		addParam(key);
+#ifdef METAMODULE
+		overlay->keyRect[s][n] = Rect(key->box.pos.minus(overlay->box.pos), key->box.size);
+#endif
 	}
 
 	QuantizerSequencerWidget(QuantizerSequencer* module) {
@@ -311,6 +379,13 @@ struct QuantizerSequencerWidget : ModuleWidget {
 		addChild(createWidget<ScrewBlack>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
 		label(50.8f, 6.f, "QSEQ 8", TITLE_SIZE);
+
+#ifdef METAMODULE
+		// Created now so addKey() can record key positions; added after the keys so it draws on top.
+		overlay = new KeyboardOverlay;
+		overlay->module = module;
+		overlay->box = Rect(Vec(0, 0), box.size);
+#endif
 
 		const float kbBottom = KB_TOP + 7 * KEY_H;
 		for (int s = 0; s < NUM_STEPS; s++) {
@@ -339,6 +414,9 @@ struct QuantizerSequencerWidget : ModuleWidget {
 				addKey(module, s, n, Vec(x, boundaryY - BLACK_H / 2), Vec(BLACK_W, BLACK_H));
 			}
 		}
+#ifdef METAMODULE
+		addChild(overlay);
+#endif
 		label(2.9f, kbBottom - KEY_H / 2, "C", 8.f);
 
 		// Jacks: step controls | quantizer inputs | output.

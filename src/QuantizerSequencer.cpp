@@ -1,6 +1,4 @@
-#include "plugin.hpp"
-#include <cmath>
-#include <cstdlib>
+#include "house_style.hpp"
 
 
 static const int NUM_STEPS = 8;
@@ -167,36 +165,6 @@ struct QuantizerSequencer : Module {
 };
 
 
-// Panel colours.
-static const NVGcolor COLOR_TEXT = nvgRGB(0xff, 0xff, 0xff);
-static const NVGcolor COLOR_BLUE = nvgRGB(0x1e, 0x90, 0xff);       // LEDs and lit white keys
-static const NVGcolor COLOR_BLUE_DARK = nvgRGB(0x10, 0x60, 0xd8);  // lit black keys
-
-
-/** Bright blue LED used for the step indicators. */
-template <typename TBase = GrayModuleLightWidget>
-struct TBrightBlueLight : TBase {
-	TBrightBlueLight() {
-		this->addBaseColor(COLOR_BLUE);
-	}
-};
-using BrightBlueLight = TBrightBlueLight<>;
-
-
-/** Franklin Gothic Medium ships with Windows. Fall back to Rack's own font if it can't be loaded. */
-static std::shared_ptr<window::Font> loadPanelFont() {
-	std::shared_ptr<window::Font> font;
-#if defined ARCH_WIN && !defined METAMODULE
-	const char* windir = std::getenv("WINDIR");
-	std::string fontsDir = std::string(windir ? windir : "C:/Windows") + "/Fonts/framd.ttf";
-	font = APP->window->loadFont(fontsDir);
-#endif
-	if (!font)
-		font = APP->window->loadFont(asset::system("res/fonts/DejaVuSans.ttf"));
-	return font;
-}
-
-
 #ifdef METAMODULE
 /** MetaModule version of a piano key. The MetaModule engine draws param widgets itself and
 ignores draw() overrides, so the key uses two image frames (off/on). The SDK maps
@@ -307,47 +275,6 @@ struct PianoKey : app::Switch {
 #endif
 
 
-#ifdef METAMODULE
-/** Silver metallic knob for the MetaModule, where the stock black knob is hard to see on the black
-panel. The SDK maps res/knobs/silver-knob.svg to metamodule/assets/knobs/silver-knob.png. */
-struct SilverKnob : app::SvgKnob {
-	SilverKnob() {
-		minAngle = -0.83f * M_PI;
-		maxAngle = 0.83f * M_PI;
-		setSvg(Svg::load(asset::plugin(pluginInstance, "res/knobs/silver-knob.svg")));
-	}
-};
-using LengthKnob = SilverKnob;
-#else
-using LengthKnob = RoundSmallBlackKnob;
-#endif
-
-
-/** A text label drawn in code, since panel SVG <text> is not rendered by Rack. */
-struct PanelLabel : TransparentWidget {
-	std::string text;
-	float fontSize;
-
-	PanelLabel(Vec centerMm, std::string text, float fontSize) {
-		this->text = text;
-		this->fontSize = fontSize;
-		box.size = mm2px(Vec(20.f, 6.f));
-		box.pos = mm2px(centerMm).minus(box.size.div(2));
-	}
-
-	void draw(const DrawArgs& args) override {
-		std::shared_ptr<window::Font> font = loadPanelFont();
-		if (!font || font->handle < 0)
-			return;
-		nvgFontFaceId(args.vg, font->handle);
-		nvgFontSize(args.vg, fontSize);
-		nvgFillColor(args.vg, COLOR_TEXT);
-		nvgTextAlign(args.vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
-		nvgText(args.vg, box.size.x / 2, box.size.y / 2, text.c_str(), NULL);
-	}
-};
-
-
 struct QuantizerSequencerWidget : ModuleWidget {
 	// Keyboard geometry (mm). Each column is a piano keyboard rotated so C is at the bottom
 	// and the black keys sit on the left.
@@ -358,10 +285,6 @@ struct QuantizerSequencerWidget : ModuleWidget {
 	static constexpr float BLACK_W = 5.8f;
 	static constexpr float BLACK_H = 4.4f;
 	static constexpr float KB_TOP = 23.f;       // top of the keyboard (the B key)
-
-	// Text sizes (px).
-	static constexpr float TITLE_SIZE = 15.f;
-	static constexpr float LABEL_SIZE = 10.f;
 
 	void label(float xMm, float yMm, std::string text, float size = LABEL_SIZE) {
 		addChild(new PanelLabel(Vec(xMm, yMm), text, size));
@@ -389,10 +312,7 @@ struct QuantizerSequencerWidget : ModuleWidget {
 		setModule(module);
 		setPanel(createPanel(asset::plugin(pluginInstance, "res/QuantizerSequencer.svg")));
 
-		addChild(createWidget<ScrewBlack>(Vec(RACK_GRID_WIDTH, 0)));
-		addChild(createWidget<ScrewBlack>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
-		addChild(createWidget<ScrewBlack>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-		addChild(createWidget<ScrewBlack>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+		addScrews(this);
 
 		label(50.8f, 6.f, "QSEQ 8", TITLE_SIZE);
 
@@ -447,7 +367,7 @@ struct QuantizerSequencerWidget : ModuleWidget {
 		label(89.f, labelY, "OUT");
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10.f, jackY)), module, QuantizerSequencer::CLOCK_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(22.f, jackY)), module, QuantizerSequencer::RESET_INPUT));
-		addParam(createParamCentered<LengthKnob>(mm2px(Vec(34.f, jackY)), module, QuantizerSequencer::LENGTH_PARAM));
+		addParam(createParamCentered<SmallKnob>(mm2px(Vec(34.f, jackY)), module, QuantizerSequencer::LENGTH_PARAM));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(46.f, jackY)), module, QuantizerSequencer::SELECT_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(60.f, jackY)), module, QuantizerSequencer::CV_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(72.f, jackY)), module, QuantizerSequencer::SH_INPUT));

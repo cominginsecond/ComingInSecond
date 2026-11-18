@@ -4,12 +4,12 @@
   "version": "2.0.0",
   "license": "GPL-3.0-or-later",
   "brand": "Quantizer Sequencer",
-  "author": "",
-  "authorEmail": "",
-  "authorUrl": "",
+  "author": "Jeremy Jensen",
+  "authorEmail": "jeremy@cominginsecond.com",
+  "authorUrl": "https://github.com/cominginsecond",
   "pluginUrl": "",
   "manualUrl": "",
-  "sourceUrl": "",
+  "sourceUrl": "https://github.com/cominginsecond/QuantizerSequencer",
   "donateUrl": "",
   "changelogUrl": "",
   "modules": [
@@ -17,7 +17,10 @@
       "slug": "QuantizerSequencer",
       "name": "QSeq 8",
       "description": "Sequencer of 8 quantizers: each clock steps to the next piano-key scale",
-      "tags": ["Sequencer", "Quantizer"]
+      "tags": [
+        "Sequencer",
+        "Quantizer"
+      ]
     }
   ]
 }

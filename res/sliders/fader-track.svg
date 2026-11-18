@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- House-style fader track: same size as Rack's VCVSlider (6.72 x 25.93 mm), but a gray slot with a
+     light outline so it shows on the black panels. The stock blue-lit handle slides over it. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="6.72mm" height="25.93mm" viewBox="0 0 6.72 25.93">
+  <!-- slot -->
+  <rect x="2.11" y="0.4" width="2.5" height="25.13" rx="1.25" fill="#2e2e2e" stroke="#9a9a9a" stroke-width="0.25"/>
+  <!-- tick marks at 0, 25, 50, 75 and 100 % -->
+  <g stroke="#6a6a6a" stroke-width="0.25">
+    <line x1="0.2" y1="2.3" x2="1.6" y2="2.3"/>
+    <line x1="0.2" y1="7.6" x2="1.1" y2="7.6"/>
+    <line x1="0.2" y1="12.97" x2="1.6" y2="12.97"/>
+    <line x1="0.2" y1="18.3" x2="1.1" y2="18.3"/>
+    <line x1="0.2" y1="23.6" x2="1.6" y2="23.6"/>
+    <line x1="5.12" y1="2.3" x2="6.52" y2="2.3"/>
+    <line x1="5.62" y1="7.6" x2="6.52" y2="7.6"/>
+    <line x1="5.12" y1="12.97" x2="6.52" y2="12.97"/>
+    <line x1="5.62" y1="18.3" x2="6.52" y2="18.3"/>
+    <line x1="5.12" y1="23.6" x2="6.52" y2="23.6"/>
+  </g>
+</svg>

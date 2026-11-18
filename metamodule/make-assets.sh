@@ -25,8 +25,22 @@ for k in black-off black-on; do
 	rsvg-convert -w "$(px 5.8)" -h "$(px 4.4)" "$RES/keys/$k.svg" -o "$OUT/keys/$k.png"
 done
 
-# Silver LENGTH knob face (9 mm). The MetaModule rotates this image.
+# Silver knob faces (MetaModule only), each rendered at its own size in mm. The MetaModule
+# rotates these images.
 mkdir -p "$OUT/knobs"
-rsvg-convert -w "$(px 9)" -h "$(px 9)" "$RES/knobs/silver-knob.svg" -o "$OUT/knobs/silver-knob.png"
+for knob in "$RES"/knobs/*.svg; do
+	name=$(basename "$knob" .svg)
+	mm=$(sed -n -E 's/.*<svg[^>]* width="([0-9.]+)mm".*/\1/p' "$knob" | head -1)
+	rsvg-convert -w "$(px "$mm")" -h "$(px "$mm")" "$knob" -o "$OUT/knobs/$name.png"
+done
+
+# Fader tracks, each rendered at its own width x height in mm.
+mkdir -p "$OUT/sliders"
+for track in "$RES"/sliders/*.svg; do
+	name=$(basename "$track" .svg)
+	w=$(sed -n -E 's/.*<svg[^>]* width="([0-9.]+)mm".*/\1/p' "$track" | head -1)
+	h=$(sed -n -E 's/.*<svg[^>]* height="([0-9.]+)mm".*/\1/p' "$track" | head -1)
+	rsvg-convert -w "$(px "$w")" -h "$(px "$h")" "$track" -o "$OUT/sliders/$name.png"
+done
 
 echo "Assets written to $OUT/"

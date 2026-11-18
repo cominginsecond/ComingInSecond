@@ -68,21 +68,45 @@ struct PanelLabel : TransparentWidget {
 
 
 #ifdef METAMODULE
-/** Silver metallic knob for the MetaModule, where the stock black knob is hard to see on the black
-panel. The SDK maps res/knobs/silver-knob.svg to metamodule/assets/knobs/silver-knob.png. */
+/** Silver metallic knobs for the MetaModule, where the stock black knobs are hard to see on the
+black panel. The SDK maps res/knobs/NAME.svg to metamodule/assets/knobs/NAME.png. */
 struct SilverKnob : app::SvgKnob {
 	SilverKnob() {
 		minAngle = -0.83f * M_PI;
 		maxAngle = 0.83f * M_PI;
+	}
+};
+struct SmallSilverKnob : SilverKnob {
+	SmallSilverKnob() {
 		setSvg(Svg::load(asset::plugin(pluginInstance, "res/knobs/silver-knob.svg")));
 	}
 };
-/** Small knob: silver on MetaModule, the stock small black knob in VCV Rack. */
-using SmallKnob = SilverKnob;
+struct MediumSilverKnob : SilverKnob {
+	MediumSilverKnob() {
+		setSvg(Svg::load(asset::plugin(pluginInstance, "res/knobs/silver-knob-medium.svg")));
+	}
+};
+/** Small knob (9 mm on MetaModule): silver on MetaModule, the stock small black knob in VCV Rack. */
+using SmallKnob = SmallSilverKnob;
+/** Medium knob (10 mm on MetaModule): silver on MetaModule, the stock black knob in VCV Rack. */
+using MediumKnob = MediumSilverKnob;
 #else
 /** Small knob: silver on MetaModule, the stock small black knob in VCV Rack. */
 using SmallKnob = RoundSmallBlackKnob;
+/** Medium knob: silver on MetaModule, the stock black knob in VCV Rack. */
+using MediumKnob = RoundBlackKnob;
 #endif
+
+
+/** Vertical fader with a blue-lit handle. Rack's stock track is a black slot that disappears on our
+black panels, so this uses res/sliders/fader-track.svg (gray slot, light outline, tick marks).
+Create it with createLightParamCentered, passing a light for the handle's brightness. On
+MetaModule the track maps to metamodule/assets/sliders/fader-track.png. */
+struct BlueFader : VCVLightSlider<BrightBlueLight> {
+	BlueFader() {
+		setBackgroundSvg(Svg::load(asset::plugin(pluginInstance, "res/sliders/fader-track.svg")));
+	}
+};
 
 
 /** Adds the four black corner screws. */

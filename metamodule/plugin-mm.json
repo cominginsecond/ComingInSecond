@@ -1,5 +1,5 @@
 {
-  "MetaModuleBrandName": "Quantizer Sequencer",
+  "MetaModuleBrandName": "Coming in Second",
   "MetaModulePluginMaintainer": "cominginsecond",
   "MetaModulePluginMaintainerUrl": "https://github.com/cominginsecond/QuantizerSequencer",
   "MetaModuleDescription": "QSeq 8: a sequencer of 8 quantizers, each with its own piano-key scale. Ported from the VCV Rack plugin.",

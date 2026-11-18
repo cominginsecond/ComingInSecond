@@ -5,7 +5,7 @@
 
 ## Download
 
-**[Download the latest release](https://github.com/cominginsecond/QuantizerSequencer/releases/latest)**
+**[Download the latest release](https://github.com/cominginsecond/ComingInSecond/releases/latest)**
 
 | File | For |
 |---|---|
@@ -96,6 +96,19 @@ code is behind `#ifdef METAMODULE`. On MetaModule, the piano keys are image-base
 switches, because the MetaModule draws param widgets itself. The LENGTH knob there is a
 silver image (`res/knobs/silver-knob.svg`), so it stands out on the black panel on the
 small screen.
+
+### Adding a module
+
+All Coming in Second modules live in this one plugin. To add one:
+
+1. Write `src/<Module>.cpp`. Include `house_style.hpp` there for the shared colors,
+   labels, font, blue LEDs, knobs and screws.
+2. Draw the panel as `res/<Module>.svg`.
+3. Declare the model in `src/plugin.hpp`, and register it in `src/plugin.cpp`.
+4. Add the module to `modules` in `plugin.json`, and to `MetaModuleIncludedModules`
+   in `metamodule/plugin-mm.json`.
+5. Add the `.cpp` to `target_sources` in `metamodule/CMakeLists.txt`.
+6. Run `metamodule/make-assets.sh` to render the panel PNG.
 
 ## License
 

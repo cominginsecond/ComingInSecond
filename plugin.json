@@ -14,9 +14,27 @@
   "changelogUrl": "",
   "modules": [
     {
+      "slug": "QuantizerSequencer4",
+      "name": "QSeq 4",
+      "description": "Sequencer of 4 quantizers: each clock steps to the next piano-key scale",
+      "tags": [
+        "Sequencer",
+        "Quantizer"
+      ]
+    },
+    {
       "slug": "QuantizerSequencer",
       "name": "QSeq 8",
       "description": "Sequencer of 8 quantizers: each clock steps to the next piano-key scale",
+      "tags": [
+        "Sequencer",
+        "Quantizer"
+      ]
+    },
+    {
+      "slug": "QuantizerSequencer16",
+      "name": "QSeq 16",
+      "description": "Sequencer of 16 quantizers: each clock steps to the next piano-key scale",
       "tags": [
         "Sequencer",
         "Quantizer"

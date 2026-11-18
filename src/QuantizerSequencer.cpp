@@ -1,7 +1,6 @@
 #include "house_style.hpp"
 
 
-static const int NUM_STEPS = 8;
 static const int NUM_NOTES = 12;
 static const int MAX_CHANNELS = 16;
 
@@ -36,6 +35,9 @@ static float quantize(float voltage, uint16_t mask) {
 }
 
 
+/** A sequencer of NUM_STEPS quantizers. QSeq 4, QSeq 8 and QSeq 16 are this module with
+different step counts. */
+template <int NUM_STEPS>
 struct QuantizerSequencer : Module {
 	enum ParamId {
 		// Key for note n of step s is KEY_PARAM + s * NUM_NOTES + n.
@@ -170,23 +172,25 @@ struct QuantizerSequencer : Module {
 ignores draw() overrides, so the key uses two image frames (off/on). The SDK maps
 res/keys/NAME.svg to the PNGs in metamodule/assets/keys. The playing-note dot and the dimming of
 unused columns are drawn by KeyboardOverlay instead. */
+template <int NUM_STEPS>
 struct PianoKey : app::SvgSwitch {
-	QuantizerSequencer* module = nullptr;
+	QuantizerSequencer<NUM_STEPS>* module = nullptr;
 	int step = 0;
 	int note = 0;
 
 	void initFrames() {
 		const char* color = IS_BLACK[note] ? "black" : "white";
-		addFrame(Svg::load(asset::plugin(pluginInstance, string::f("res/keys/%s-off.svg", color))));
-		addFrame(Svg::load(asset::plugin(pluginInstance, string::f("res/keys/%s-on.svg", color))));
+		this->addFrame(Svg::load(asset::plugin(pluginInstance, string::f("res/keys/%s-off.svg", color))));
+		this->addFrame(Svg::load(asset::plugin(pluginInstance, string::f("res/keys/%s-on.svg", color))));
 	}
 };
 
 
 /** Draws on top of the keyboard: the white dot on the note being output, and darkening over
 columns past the sequence length. */
+template <int NUM_STEPS>
 struct KeyboardOverlay : TransparentWidget {
-	QuantizerSequencer* module = nullptr;
+	QuantizerSequencer<NUM_STEPS>* module = nullptr;
 	// Key rectangles in px, relative to this widget.
 	Rect keyRect[NUM_STEPS][NUM_NOTES];
 
@@ -208,7 +212,7 @@ struct KeyboardOverlay : TransparentWidget {
 		}
 
 		if (step >= 0 && step < NUM_STEPS && note >= 0 && note < NUM_NOTES &&
-			module->params[QuantizerSequencer::KEY_PARAM + step * NUM_NOTES + note].getValue() > 0.5f) {
+			module->params[QuantizerSequencer<NUM_STEPS>::KEY_PARAM + step * NUM_NOTES + note].getValue() > 0.5f) {
 			Rect r = keyRect[step][note];
 			float radius = std::min(r.size.x, r.size.y) * 0.18f;
 			float cx = IS_BLACK[note] ? r.pos.x + r.size.x / 2 : r.pos.x + r.size.x - radius * 2.2f;
@@ -221,8 +225,9 @@ struct KeyboardOverlay : TransparentWidget {
 };
 #else
 /** One latching piano key. Clicking toggles the note in or out of that step's scale. */
+template <int NUM_STEPS>
 struct PianoKey : app::Switch {
-	QuantizerSequencer* module = nullptr;
+	QuantizerSequencer<NUM_STEPS>* module = nullptr;
 	int step = 0;
 	int note = 0;
 
@@ -231,7 +236,7 @@ struct PianoKey : app::Switch {
 
 	void draw(const DrawArgs& args) override {
 		bool black = IS_BLACK[note];
-		ParamQuantity* pq = getParamQuantity();
+		ParamQuantity* pq = this->getParamQuantity();
 		bool on = pq ? pq->getValue() > 0.5f : DEFAULT_SCALE[note];
 
 		NVGcolor fill;
@@ -253,8 +258,9 @@ struct PianoKey : app::Switch {
 			stroke = nvgLerpRGBA(panel, stroke, 0.3f);
 		}
 
+		Vec size = this->box.size;
 		nvgBeginPath(args.vg);
-		nvgRoundedRect(args.vg, 0.4f, 0.4f, box.size.x - 0.8f, box.size.y - 0.8f, 1.2f);
+		nvgRoundedRect(args.vg, 0.4f, 0.4f, size.x - 0.8f, size.y - 0.8f, 1.2f);
 		nvgFillColor(args.vg, fill);
 		nvgFill(args.vg);
 		nvgStrokeColor(args.vg, stroke);
@@ -263,10 +269,10 @@ struct PianoKey : app::Switch {
 
 		// Mark the note currently being output, in the active step's column.
 		if (module && module->displayStep == step && module->displayNote == note && on) {
-			float r = std::min(box.size.x, box.size.y) * 0.18f;
-			float cx = black ? box.size.x / 2 : box.size.x - r * 2.2f;
+			float r = std::min(size.x, size.y) * 0.18f;
+			float cx = black ? size.x / 2 : size.x - r * 2.2f;
 			nvgBeginPath(args.vg);
-			nvgCircle(args.vg, cx, box.size.y / 2, r);
+			nvgCircle(args.vg, cx, size.y / 2, r);
 			nvgFillColor(args.vg, nvgRGB(0xff, 0xff, 0xff));
 			nvgFill(args.vg);
 		}
@@ -275,10 +281,38 @@ struct PianoKey : app::Switch {
 #endif
 
 
+/** Where the jacks and the length knob go on each panel size (mm, centres). */
+struct JackLayout {
+	Vec clock, reset, length, select, cv, sh, out;
+};
+
+/** QSeq 8 (20HP) and QSeq 16 (38HP): one row of jacks along the bottom, centred on the panel. */
+static JackLayout singleRowLayout(float panelWidth) {
+	const float dx = (panelWidth - 101.6f) / 2;
+	const float y = 100.5f;
+	return {
+		Vec(10.f + dx, y), Vec(22.f + dx, y), Vec(34.f + dx, y), Vec(46.f + dx, y),
+		Vec(60.f + dx, y), Vec(72.f + dx, y), Vec(89.f + dx, y),
+	};
+}
+
+/** QSeq 4 (12HP) is too narrow for one row: step controls above, quantizer jacks below. */
+static JackLayout twoRowLayout() {
+	const float y1 = 89.5f;
+	const float y2 = 115.f;
+	return {
+		Vec(12.48f, y1), Vec(24.48f, y1), Vec(36.48f, y1), Vec(48.48f, y1),
+		Vec(14.23f, y2), Vec(26.23f, y2), Vec(43.23f, y2),
+	};
+}
+
+
+template <int NUM_STEPS>
 struct QuantizerSequencerWidget : ModuleWidget {
+	using QSeq = QuantizerSequencer<NUM_STEPS>;
+
 	// Keyboard geometry (mm). Each column is a piano keyboard rotated so C is at the bottom
 	// and the black keys sit on the left.
-	static constexpr float COL_X0 = 5.8f;       // left edge of column 1
 	static constexpr float COL_PITCH = 11.5f;   // distance between columns
 	static constexpr float KEY_W = 9.5f;        // white key width
 	static constexpr float KEY_H = 7.f;         // white key height
@@ -286,16 +320,21 @@ struct QuantizerSequencerWidget : ModuleWidget {
 	static constexpr float BLACK_H = 4.4f;
 	static constexpr float KB_TOP = 23.f;       // top of the keyboard (the B key)
 
+	// Panel width (mm) to match res/QuantizerSequencer*.svg: 12HP, 20HP or 38HP.
+	static constexpr float PANEL_W = NUM_STEPS <= 4 ? 60.96f : NUM_STEPS <= 8 ? 101.6f : 193.04f;
+	// Left edge of column 1, centring the keyboard on the panel.
+	static constexpr float COL_X0 = (PANEL_W - ((NUM_STEPS - 1) * COL_PITCH + KEY_W)) / 2;
+
 	void label(float xMm, float yMm, std::string text, float size = LABEL_SIZE) {
 		addChild(new PanelLabel(Vec(xMm, yMm), text, size));
 	}
 
 #ifdef METAMODULE
-	KeyboardOverlay* overlay = nullptr;
+	KeyboardOverlay<NUM_STEPS>* overlay = nullptr;
 #endif
 
-	void addKey(QuantizerSequencer* module, int s, int n, Vec posMm, Vec sizeMm) {
-		PianoKey* key = createParam<PianoKey>(mm2px(posMm), module, QuantizerSequencer::KEY_PARAM + s * NUM_NOTES + n);
+	void addKey(QSeq* module, int s, int n, Vec posMm, Vec sizeMm) {
+		PianoKey<NUM_STEPS>* key = createParam<PianoKey<NUM_STEPS>>(mm2px(posMm), module, QSeq::KEY_PARAM + s * NUM_NOTES + n);
 		key->module = module;
 		key->step = s;
 		key->note = n;
@@ -308,17 +347,21 @@ struct QuantizerSequencerWidget : ModuleWidget {
 #endif
 	}
 
-	QuantizerSequencerWidget(QuantizerSequencer* module) {
+	static std::string panelPath() {
+		return NUM_STEPS == 8 ? "res/QuantizerSequencer.svg" : string::f("res/QuantizerSequencer%d.svg", NUM_STEPS);
+	}
+
+	QuantizerSequencerWidget(QSeq* module) {
 		setModule(module);
-		setPanel(createPanel(asset::plugin(pluginInstance, "res/QuantizerSequencer.svg")));
+		setPanel(createPanel(asset::plugin(pluginInstance, panelPath())));
 
 		addScrews(this);
 
-		label(50.8f, 6.f, "QSEQ 8", TITLE_SIZE);
+		label(PANEL_W / 2, 6.f, string::f("QSEQ %d", NUM_STEPS), TITLE_SIZE);
 
 #ifdef METAMODULE
 		// Created now so addKey() can record key positions; added after the keys so it draws on top.
-		overlay = new KeyboardOverlay;
+		overlay = new KeyboardOverlay<NUM_STEPS>;
 		overlay->module = module;
 		overlay->box = Rect(Vec(0, 0), box.size);
 #endif
@@ -328,7 +371,7 @@ struct QuantizerSequencerWidget : ModuleWidget {
 			float x = COL_X0 + s * COL_PITCH;
 			float cx = x + KEY_W / 2;
 			label(cx, 14.5f, std::to_string(s + 1));
-			addChild(createLightCentered<MediumLight<BrightBlueLight>>(mm2px(Vec(cx, 19.f)), module, QuantizerSequencer::STEP_LIGHT + s));
+			addChild(createLightCentered<MediumLight<BrightBlueLight>>(mm2px(Vec(cx, 19.f)), module, QSeq::STEP_LIGHT + s));
 
 			// White keys first, then black keys on top, so the black keys get clicks where they overlap.
 			int whiteIndex = 0;
@@ -353,27 +396,32 @@ struct QuantizerSequencerWidget : ModuleWidget {
 #ifdef METAMODULE
 		addChild(overlay);
 #endif
-		label(2.9f, kbBottom - KEY_H / 2, "C", 8.f);
+		label(COL_X0 / 2, kbBottom - KEY_H / 2, "C", 8.f);
 
-		// Jacks: step controls | quantizer inputs | output.
-		const float labelY = 90.5f;
-		const float jackY = 100.5f;
-		label(10.f, labelY, "CLOCK");
-		label(22.f, labelY, "RESET");
-		label(34.f, labelY, "LENGTH");
-		label(46.f, labelY, "SCALE");
-		label(60.f, labelY, "CV IN");
-		label(72.f, labelY, "S&H");
-		label(89.f, labelY, "OUT");
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10.f, jackY)), module, QuantizerSequencer::CLOCK_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(22.f, jackY)), module, QuantizerSequencer::RESET_INPUT));
-		addParam(createParamCentered<SmallKnob>(mm2px(Vec(34.f, jackY)), module, QuantizerSequencer::LENGTH_PARAM));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(46.f, jackY)), module, QuantizerSequencer::SELECT_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(60.f, jackY)), module, QuantizerSequencer::CV_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(72.f, jackY)), module, QuantizerSequencer::SH_INPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(89.f, jackY)), module, QuantizerSequencer::CV_OUTPUT));
+		// Jacks: step controls | quantizer inputs | output. Each label sits 10 mm above its jack.
+		JackLayout j = NUM_STEPS <= 4 ? twoRowLayout() : singleRowLayout(PANEL_W);
+		auto jackLabel = [&](Vec pos, const char* text) {
+			label(pos.x, pos.y - 10.f, text);
+		};
+		jackLabel(j.clock, "CLOCK");
+		jackLabel(j.reset, "RESET");
+		jackLabel(j.length, "LENGTH");
+		jackLabel(j.select, "SCALE");
+		jackLabel(j.cv, "CV IN");
+		jackLabel(j.sh, "S&H");
+		jackLabel(j.out, "OUT");
+		addInput(createInputCentered<PJ301MPort>(mm2px(j.clock), module, QSeq::CLOCK_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(j.reset), module, QSeq::RESET_INPUT));
+		addParam(createParamCentered<SmallKnob>(mm2px(j.length), module, QSeq::LENGTH_PARAM));
+		addInput(createInputCentered<PJ301MPort>(mm2px(j.select), module, QSeq::SELECT_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(j.cv), module, QSeq::CV_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(j.sh), module, QSeq::SH_INPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(j.out), module, QSeq::CV_OUTPUT));
 	}
 };
 
 
-Model* modelQuantizerSequencer = createModel<QuantizerSequencer, QuantizerSequencerWidget>("QuantizerSequencer");
+// QSeq 8 keeps the original slug so existing patches still load.
+Model* modelQuantizerSequencer4 = createModel<QuantizerSequencer<4>, QuantizerSequencerWidget<4>>("QuantizerSequencer4");
+Model* modelQuantizerSequencer = createModel<QuantizerSequencer<8>, QuantizerSequencerWidget<8>>("QuantizerSequencer");
+Model* modelQuantizerSequencer16 = createModel<QuantizerSequencer<16>, QuantizerSequencerWidget<16>>("QuantizerSequencer16");

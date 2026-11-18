@@ -8,4 +8,6 @@ using namespace rack;
 extern Plugin* pluginInstance;
 
 // Declare each Model, defined in each module source file
+extern Model* modelQuantizerSequencer4;
 extern Model* modelQuantizerSequencer;
+extern Model* modelQuantizerSequencer16;

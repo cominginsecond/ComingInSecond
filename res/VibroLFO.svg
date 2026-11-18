@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 14HP panel: 71.12mm x 128.5mm. Labels, knobs, faders and wave drawings are added in code. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="71.12mm" height="128.5mm" viewBox="0 0 71.12 128.5">
+  <rect x="0" y="0" width="71.12" height="128.5" fill="#000000"/>
+  <!-- rule under the title -->
+  <rect x="4" y="10.6" width="63.12" height="0.35" fill="#ffffff"/>
+  <!-- envelope knobs: delay, rise, release -->
+  <rect x="3.5" y="12.5" width="64.12" height="17.5" rx="2" fill="none" stroke="#5a5a5a" stroke-width="0.4"/>
+  <!-- lfo knobs: speed, amp, offset -->
+  <rect x="3.5" y="30.5" width="64.12" height="17.5" rx="2" fill="none" stroke="#5a5a5a" stroke-width="0.4"/>
+  <!-- inputs: gate, clock -->
+  <rect x="3.5" y="48.5" width="42.5" height="18" rx="2" fill="none" stroke="#5a5a5a" stroke-width="0.4"/>
+  <!-- output -->
+  <rect x="47" y="48.5" width="20.62" height="18" rx="2" fill="#262626" stroke="#ffffff" stroke-width="0.4"/>
+  <!-- mix faders -->
+  <rect x="3.5" y="69.5" width="64.12" height="45" rx="2" fill="none" stroke="#5a5a5a" stroke-width="0.4"/>
+</svg>

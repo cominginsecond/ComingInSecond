@@ -11,3 +11,4 @@ extern Plugin* pluginInstance;
 extern Model* modelQuantizerSequencer4;
 extern Model* modelQuantizerSequencer;
 extern Model* modelQuantizerSequencer16;
+extern Model* modelVibroLFO;

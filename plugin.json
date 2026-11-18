@@ -39,6 +39,15 @@
         "Sequencer",
         "Quantizer"
       ]
+    },
+    {
+      "slug": "VibroLFO",
+      "name": "VibroLFO",
+      "description": "Gated LFO with delay, rise and release, clock sync, and a five-waveform mix",
+      "tags": [
+        "LFO",
+        "Envelope generator"
+      ]
     }
   ]
 }

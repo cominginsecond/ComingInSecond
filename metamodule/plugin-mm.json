@@ -2,7 +2,7 @@
   "MetaModuleBrandName": "Coming in Second",
   "MetaModulePluginMaintainer": "cominginsecond",
   "MetaModulePluginMaintainerUrl": "https://github.com/cominginsecond/ComingInSecond",
-  "MetaModuleDescription": "QSeq 4, 8 and 16: sequencers of 4, 8 or 16 quantizers, each with its own piano-key scale. Ported from the VCV Rack plugin.",
+  "MetaModuleDescription": "Coming in Second modules: QSeq 4, 8 and 16 (sequencers of piano-key quantizers) and VibroLFO (a gated, clock-syncable LFO). Ported from the VCV Rack plugin.",
   "MetaModuleIncludedModules": [
     {
       "slug": "QuantizerSequencer4",
@@ -411,6 +411,19 @@
           "Step 16 A",
           "Step 16 A#",
           "Step 16 B"
+        ]
+      }
+    },
+    {
+      "slug": "VibroLFO",
+      "name": "VibroLFO",
+      "groups": {
+        "Mix": [
+          "Triangle",
+          "Sine",
+          "Square",
+          "Ramp up",
+          "Ramp down"
         ]
       }
     }

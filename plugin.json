@@ -1,0 +1,23 @@
+{
+  "slug": "QuantizerSequencer",
+  "name": "Quantizer Sequencer",
+  "version": "2.0.0",
+  "license": "proprietary",
+  "brand": "Quantizer Sequencer",
+  "author": "",
+  "authorEmail": "",
+  "authorUrl": "",
+  "pluginUrl": "",
+  "manualUrl": "",
+  "sourceUrl": "",
+  "donateUrl": "",
+  "changelogUrl": "",
+  "modules": [
+    {
+      "slug": "QuantizerSequencer",
+      "name": "QSeq 8",
+      "description": "Sequencer of 8 quantizers: each clock steps to the next piano-key scale",
+      "tags": ["Sequencer", "Quantizer"]
+    }
+  ]
+}

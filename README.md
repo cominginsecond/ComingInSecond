@@ -3,6 +3,18 @@
 [VCV Rack 2](https://vcvrack.com) modules by **Coming in Second**, also ported to the
 [4ms MetaModule](https://4mscompany.com/metamodule). The plugin currently contains one module, QSeq 8.
 
+## Download
+
+**[Download the latest release](https://github.com/cominginsecond/QuantizerSequencer/releases/latest)**
+
+| File | For |
+|---|---|
+| `ComingInSecond-<version>-win-x64.vcvplugin` | VCV Rack 2 on Windows (64-bit) |
+| `ComingInSecond-v<version>.mmplugin` | 4ms MetaModule, firmware 2.4 or later |
+
+Only Windows builds of the VCV plugin are available for now. On macOS or Linux, build it
+from source (see [Building](#building)).
+
 ## QSeq 8
 
 <img src="docs/qseq8.png" alt="QSeq 8 panel in VCV Rack" width="300">
@@ -37,9 +49,9 @@ A white dot on a key marks the note currently being output.
 **VCV Rack:** copy the `.vcvplugin` file into your Rack plugins folder, then restart Rack.
 On Windows, that folder is `%LOCALAPPDATA%\Rack2\plugins-win-x64`.
 
-**MetaModule:** copy the `metamodule-plugins` folder (the folder itself, not just the
-file inside it) to the root of an SD card or USB drive. Then load **Coming in Second**
-from the plugins menu. This needs firmware 2.4 or later.
+**MetaModule:** put the `.mmplugin` file in a folder named `metamodule-plugins` at the
+root of an SD card or USB drive. Then load **Coming in Second** from the plugins menu.
+This needs firmware 2.4 or later.
 
 ## Building
 

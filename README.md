@@ -5,6 +5,8 @@
 
 ## QSeq 8
 
+<img src="docs/qseq8.png" alt="QSeq 8 panel in VCV Rack" width="300">
+
 QSeq 8 is a sequencer of eight quantizers. Each step has its own scale, set with a
 column of piano keys. A clock moves from step to step, and the incoming CV is quantized
 to the scale of the active step.

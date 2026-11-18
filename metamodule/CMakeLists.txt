@@ -11,21 +11,21 @@ else()
 endif()
 include(${METAMODULE_SDK_DIR}/plugin.cmake)
 
-project(QuantizerSequencer VERSION 2.0.0 DESCRIPTION "QSeq 8 for MetaModule" LANGUAGES C CXX ASM)
+project(ComingInSecond VERSION 2.0.0 DESCRIPTION "Coming in Second modules for MetaModule" LANGUAGES C CXX ASM)
 
 # The MetaModule build compiles the same sources as the VCV Rack build.
 set(SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/..)
 
-add_library(QuantizerSequencer STATIC)
-target_sources(QuantizerSequencer PRIVATE
+add_library(ComingInSecond STATIC)
+target_sources(ComingInSecond PRIVATE
     ${SOURCE_DIR}/src/plugin.cpp
     ${SOURCE_DIR}/src/QuantizerSequencer.cpp
 )
-target_include_directories(QuantizerSequencer PRIVATE ${SOURCE_DIR}/src)
+target_include_directories(ComingInSecond PRIVATE ${SOURCE_DIR}/src)
 
 create_plugin(
-    SOURCE_LIB      QuantizerSequencer
-    PLUGIN_NAME     QuantizerSequencer
+    SOURCE_LIB      ComingInSecond
+    PLUGIN_NAME     ComingInSecond   # must match the slug in plugin.json
     PLUGIN_JSON     ${SOURCE_DIR}/plugin.json
     SOURCE_ASSETS   ${CMAKE_CURRENT_LIST_DIR}/assets
     DESTINATION     ${CMAKE_CURRENT_LIST_DIR}/metamodule-plugins

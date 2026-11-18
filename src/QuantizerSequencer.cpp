@@ -168,16 +168,7 @@ struct QuantizerSequencer : Module {
 
 
 // Panel colours.
-static const NVGcolor COLOR_TEXT = nvgRGB(0xff, 0xff, 0xff);       // labels on black (all labels in VCV)
-#ifdef METAMODULE
-// The MetaModule faceplate has a light gray body, so the labels outside the black jack panels are dark.
-static const NVGcolor COLOR_TITLE = nvgRGB(0x0b, 0x3a, 0x8c);      // dark blue, matching the key blues
-static const NVGcolor COLOR_BODY_TEXT = nvgRGB(0x1a, 0x1a, 0x1a);  // step numbers and the "C" marker
-static const NVGcolor COLOR_DIM = nvgRGBA(0xd4, 0xd4, 0xd4, 0xb0); // fades unused columns into the body
-#else
-static const NVGcolor COLOR_TITLE = COLOR_TEXT;
-static const NVGcolor COLOR_BODY_TEXT = COLOR_TEXT;
-#endif
+static const NVGcolor COLOR_TEXT = nvgRGB(0xff, 0xff, 0xff);
 static const NVGcolor COLOR_BLUE = nvgRGB(0x1e, 0x90, 0xff);       // LEDs and lit white keys
 static const NVGcolor COLOR_BLUE_DARK = nvgRGB(0x10, 0x60, 0xd8);  // lit black keys
 
@@ -244,7 +235,7 @@ struct KeyboardOverlay : TransparentWidget {
 			Rect top = keyRect[s][NUM_NOTES - 1];
 			nvgBeginPath(args.vg);
 			nvgRect(args.vg, top.pos.x, top.pos.y, bottom.size.x, bottom.pos.y + bottom.size.y - top.pos.y);
-			nvgFillColor(args.vg, COLOR_DIM);
+			nvgFillColor(args.vg, nvgRGBA(0x00, 0x00, 0x00, 0xb0));
 			nvgFill(args.vg);
 		}
 
@@ -320,12 +311,10 @@ struct PianoKey : app::Switch {
 struct PanelLabel : TransparentWidget {
 	std::string text;
 	float fontSize;
-	NVGcolor color;
 
-	PanelLabel(Vec centerMm, std::string text, float fontSize, NVGcolor color) {
+	PanelLabel(Vec centerMm, std::string text, float fontSize) {
 		this->text = text;
 		this->fontSize = fontSize;
-		this->color = color;
 		box.size = mm2px(Vec(20.f, 6.f));
 		box.pos = mm2px(centerMm).minus(box.size.div(2));
 	}
@@ -336,7 +325,7 @@ struct PanelLabel : TransparentWidget {
 			return;
 		nvgFontFaceId(args.vg, font->handle);
 		nvgFontSize(args.vg, fontSize);
-		nvgFillColor(args.vg, color);
+		nvgFillColor(args.vg, COLOR_TEXT);
 		nvgTextAlign(args.vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
 		nvgText(args.vg, box.size.x / 2, box.size.y / 2, text.c_str(), NULL);
 	}
@@ -358,8 +347,8 @@ struct QuantizerSequencerWidget : ModuleWidget {
 	static constexpr float TITLE_SIZE = 15.f;
 	static constexpr float LABEL_SIZE = 10.f;
 
-	void label(float xMm, float yMm, std::string text, float size = LABEL_SIZE, NVGcolor color = COLOR_TEXT) {
-		addChild(new PanelLabel(Vec(xMm, yMm), text, size, color));
+	void label(float xMm, float yMm, std::string text, float size = LABEL_SIZE) {
+		addChild(new PanelLabel(Vec(xMm, yMm), text, size));
 	}
 
 #ifdef METAMODULE
@@ -389,7 +378,7 @@ struct QuantizerSequencerWidget : ModuleWidget {
 		addChild(createWidget<ScrewBlack>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		addChild(createWidget<ScrewBlack>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-		label(50.8f, 6.f, "QSEQ 8", TITLE_SIZE, COLOR_TITLE);
+		label(50.8f, 6.f, "QSEQ 8", TITLE_SIZE);
 
 #ifdef METAMODULE
 		// Created now so addKey() can record key positions; added after the keys so it draws on top.
@@ -402,7 +391,7 @@ struct QuantizerSequencerWidget : ModuleWidget {
 		for (int s = 0; s < NUM_STEPS; s++) {
 			float x = COL_X0 + s * COL_PITCH;
 			float cx = x + KEY_W / 2;
-			label(cx, 14.5f, std::to_string(s + 1), LABEL_SIZE, COLOR_BODY_TEXT);
+			label(cx, 14.5f, std::to_string(s + 1));
 			addChild(createLightCentered<MediumLight<BrightBlueLight>>(mm2px(Vec(cx, 19.f)), module, QuantizerSequencer::STEP_LIGHT + s));
 
 			// White keys first, then black keys on top, so the black keys get clicks where they overlap.
@@ -428,7 +417,7 @@ struct QuantizerSequencerWidget : ModuleWidget {
 #ifdef METAMODULE
 		addChild(overlay);
 #endif
-		label(2.9f, kbBottom - KEY_H / 2, "C", 8.f, COLOR_BODY_TEXT);
+		label(2.9f, kbBottom - KEY_H / 2, "C", 8.f);
 
 		// Jacks: step controls | quantizer inputs | output.
 		const float labelY = 90.5f;

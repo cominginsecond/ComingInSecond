@@ -1,7 +1,7 @@
-# Quantizer Sequencer
+# Coming in Second
 
-A [VCV Rack 2](https://vcvrack.com) plugin by **Coming in Second**, also ported to the
-[4ms MetaModule](https://4mscompany.com/metamodule).
+[VCV Rack 2](https://vcvrack.com) modules by **Coming in Second**, also ported to the
+[4ms MetaModule](https://4mscompany.com/metamodule). The plugin currently contains one module, QSeq 8.
 
 ## QSeq 8
 
@@ -74,12 +74,13 @@ cmake --fresh -B build -G Ninja -DMETAMODULE_SDK_DIR=/path/to/metamodule-plugin-
 cmake --build build
 ```
 
-The plugin is written to `metamodule/metamodule-plugins/QuantizerSequencer.mmplugin`.
+The plugin is written to `metamodule/metamodule-plugins/ComingInSecond.mmplugin`.
 
 The MetaModule build compiles the same source as the VCV build. MetaModule-specific
 code is behind `#ifdef METAMODULE`. On MetaModule, the piano keys are image-based
-switches, because the MetaModule draws param widgets itself. The faceplate there is
-`metamodule/faceplate.svg`, which has a light gray body.
+switches, because the MetaModule draws param widgets itself. The LENGTH knob there is a
+silver image (`res/knobs/silver-knob.svg`), so it stands out on the black panel on the
+small screen.
 
 ## License
 

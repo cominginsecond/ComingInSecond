@@ -53,6 +53,14 @@ struct VibroLFO : Module {
 	enum InputId {
 		GATE_INPUT,
 		CLOCK_INPUT,
+		// One CV input per knob and fader, in the same order as the params.
+		DELAY_CV_INPUT,
+		RISE_CV_INPUT,
+		RELEASE_CV_INPUT,
+		SPEED_CV_INPUT,
+		AMPLITUDE_CV_INPUT,
+		OFFSET_CV_INPUT,
+		ENUMS(MIX_CV_INPUT, NUM_WAVES),
 		INPUTS_LEN
 	};
 	enum OutputId {
@@ -92,7 +100,7 @@ struct VibroLFO : Module {
 		}
 		std::string getDisplayValueString() override {
 			if (clocked())
-				return RATIO_LABELS[static_cast<VibroLFO*>(module)->ratioIndex()];
+				return RATIO_LABELS[static_cast<VibroLFO*>(module)->ratioIndex(0.f)];
 			return ParamQuantity::getDisplayValueString();
 		}
 		std::string getUnit() override {
@@ -125,6 +133,15 @@ struct VibroLFO : Module {
 
 		configInput(GATE_INPUT, "Gate (LFO runs while high)");
 		configInput(CLOCK_INPUT, "Clock (sync; SPEED then picks the ratio)");
+		// Each CV adds to its control. 10 V sweeps the whole range (SPEED: 1 V/oct, OFFSET: 1 V/V).
+		configInput(DELAY_CV_INPUT, "Delay CV (+10 V = +5 s)");
+		configInput(RISE_CV_INPUT, "Rise CV (+10 V = +5 s)");
+		configInput(RELEASE_CV_INPUT, "Release CV (+10 V = +5 s)");
+		configInput(SPEED_CV_INPUT, "Speed CV (1 V/oct; clocked, 1 V = one ratio step)");
+		configInput(AMPLITUDE_CV_INPUT, "Amplitude CV (+10 V = full knob turn)");
+		configInput(OFFSET_CV_INPUT, "Offset CV (added to the knob)");
+		for (int i = 0; i < NUM_WAVES; i++)
+			configInput(MIX_CV_INPUT + i, std::string(WAVE_NAMES[i]) + " CV (+10 V = full fader)");
 		configOutput(LFO_OUTPUT, "LFO");
 		for (int i = 0; i < NUM_WAVES; i++)
 			configLight(MIX_LIGHT + i, std::string(WAVE_NAMES[i]) + " level");
@@ -140,10 +157,16 @@ struct VibroLFO : Module {
 		clockPeriod = 0.5f;
 	}
 
-	int ratioIndex() {
+	/** The clock ratio picked by the SPEED knob, moved `speedCv` steps (1 V per step: each step doubles). */
+	int ratioIndex(float speedCv) {
 		ParamQuantity* pq = getParamQuantity(SPEED_PARAM);
 		float t = (params[SPEED_PARAM].getValue() - pq->getMinValue()) / (pq->getMaxValue() - pq->getMinValue());
-		return clamp((int) std::round(t * (NUM_RATIOS - 1)), 0, NUM_RATIOS - 1);
+		return clamp((int) std::round(t * (NUM_RATIOS - 1) + speedCv), 0, NUM_RATIOS - 1);
+	}
+
+	/** A control's knob or fader value plus its CV input times `voltsToValue`, clamped to [lo, hi]. */
+	float withCv(int param, int input, float voltsToValue, float lo, float hi) {
+		return clamp(params[param].getValue() + inputs[input].getVoltage() * voltsToValue, lo, hi);
 	}
 
 	void process(const ProcessArgs& args) override {
@@ -151,9 +174,10 @@ struct VibroLFO : Module {
 
 		// LFO rate: free-running from SPEED, or a ratio of the measured clock tempo.
 		bool clocked = inputs[CLOCK_INPUT].isConnected();
+		float speedCv = inputs[SPEED_CV_INPUT].getVoltage();
 		float freq;
 		if (clocked) {
-			float ratio = RATIOS[ratioIndex()];
+			float ratio = RATIOS[ratioIndex(speedCv)];
 			int division = ratio < 1.f ? (int) std::round(1.f / ratio) : 1;
 			timeSinceClock += dt;
 			if (clockTrigger.process(inputs[CLOCK_INPUT].getVoltage(), 0.1f, 1.f)) {
@@ -173,8 +197,14 @@ struct VibroLFO : Module {
 		else {
 			clockSeen = false;
 			clockCount = 0;
-			freq = std::pow(2.f, params[SPEED_PARAM].getValue());
+			// The knob is log2(Hz), so adding the CV gives 1 V/oct.
+			freq = std::pow(2.f, clamp(params[SPEED_PARAM].getValue() + speedCv, std::log2(MIN_HZ), std::log2(MAX_HZ)));
 		}
+
+		const float timePerVolt = MAX_TIME / 10.f;
+		float delay = withCv(DELAY_PARAM, DELAY_CV_INPUT, timePerVolt, 0.f, MAX_TIME);
+		float rise = withCv(RISE_PARAM, RISE_CV_INPUT, timePerVolt, 0.f, MAX_TIME);
+		float release = withCv(RELEASE_PARAM, RELEASE_CV_INPUT, timePerVolt, 0.f, MAX_TIME);
 
 		// Gate stages.
 		bool wasHigh = gateTrigger.isHigh();
@@ -192,7 +222,7 @@ struct VibroLFO : Module {
 
 		if (stage == DELAY) {
 			delayElapsed += dt;
-			if (delayElapsed >= params[DELAY_PARAM].getValue()) {
+			if (delayElapsed >= delay) {
 				stage = RUN;
 				// Free-running, each gate starts a fresh cycle. Clocked, the phase stays on the beat.
 				if (!clocked)
@@ -200,11 +230,9 @@ struct VibroLFO : Module {
 			}
 		}
 		if (stage == RUN) {
-			float rise = params[RISE_PARAM].getValue();
 			envelope = (rise > 0.f) ? std::min(envelope + dt / rise, 1.f) : 1.f;
 		}
 		else if (stage == RELEASE) {
-			float release = params[RELEASE_PARAM].getValue();
 			envelope = (release > 0.f) ? envelope - dt / release : 0.f;
 			if (envelope <= 0.f) {
 				envelope = 0.f;
@@ -223,7 +251,7 @@ struct VibroLFO : Module {
 		float mix = 0.f;
 		float total = 0.f;
 		for (int i = 0; i < NUM_WAVES; i++) {
-			float level = params[MIX_PARAM + i].getValue();
+			float level = withCv(MIX_PARAM + i, MIX_CV_INPUT + i, 0.1f, 0.f, 1.f);
 			total += level;
 			mix += level * waveValue(i, phase);
 			lights[MIX_LIGHT + i].setBrightness(level);
@@ -232,10 +260,11 @@ struct VibroLFO : Module {
 			mix /= total;
 
 		// Squared taper, matching AmplitudeQuantity's display.
-		float amp = params[AMPLITUDE_PARAM].getValue();
+		float amp = withCv(AMPLITUDE_PARAM, AMPLITUDE_CV_INPUT, 0.1f, 0.f, 1.f);
 		float amplitude = MAX_AMPLITUDE * amp * amp;
 		float lfo = amplitude * envelope * mix;
-		outputs[LFO_OUTPUT].setVoltage(params[OFFSET_PARAM].getValue() + lfo);
+		float offset = withCv(OFFSET_PARAM, OFFSET_CV_INPUT, 1.f, -10.f, 10.f);
+		outputs[LFO_OUTPUT].setVoltage(offset + lfo);
 		lights[OUT_LIGHT].setBrightness(envelope * (mix + 1.f) / 2.f);
 	}
 };
@@ -280,6 +309,10 @@ struct VibroLFOWidget : ModuleWidget {
 		addChild(new PanelLabel(Vec(xMm, yMm), text, size));
 	}
 
+	void cvJack(Vec posMm, Module* module, int input) {
+		addInput(createInputCentered<PJ301MPort>(mm2px(posMm), module, input));
+	}
+
 	VibroLFOWidget(VibroLFO* module) {
 		setModule(module);
 		setPanel(createPanel(asset::plugin(pluginInstance, "res/VibroLFO.svg")));
@@ -287,40 +320,51 @@ struct VibroLFOWidget : ModuleWidget {
 
 		label(35.56f, 6.f, "VIBROLFO", TITLE_SIZE);
 
-		// Three columns of controls.
+		// Three columns of controls. Each knob and fader has its CV jack right under it.
 		const float colX[3] = {14.f, 35.56f, 57.12f};
+		const float cvBelowKnob = 9.5f;
 
 		// Envelope: delay, rise, release.
-		label(colX[0], 15.5f, "DELAY");
-		label(colX[1], 15.5f, "RISE");
-		label(colX[2], 15.5f, "RELEASE");
-		addParam(createParamCentered<MediumKnob>(mm2px(Vec(colX[0], 23.5f)), module, VibroLFO::DELAY_PARAM));
-		addParam(createParamCentered<MediumKnob>(mm2px(Vec(colX[1], 23.5f)), module, VibroLFO::RISE_PARAM));
-		addParam(createParamCentered<MediumKnob>(mm2px(Vec(colX[2], 23.5f)), module, VibroLFO::RELEASE_PARAM));
+		const float envY = 23.f;
+		label(colX[0], envY - 7.5f, "DELAY");
+		label(colX[1], envY - 7.5f, "RISE");
+		label(colX[2], envY - 7.5f, "RELEASE");
+		addParam(createParamCentered<MediumKnob>(mm2px(Vec(colX[0], envY)), module, VibroLFO::DELAY_PARAM));
+		addParam(createParamCentered<MediumKnob>(mm2px(Vec(colX[1], envY)), module, VibroLFO::RISE_PARAM));
+		addParam(createParamCentered<MediumKnob>(mm2px(Vec(colX[2], envY)), module, VibroLFO::RELEASE_PARAM));
+		cvJack(Vec(colX[0], envY + cvBelowKnob), module, VibroLFO::DELAY_CV_INPUT);
+		cvJack(Vec(colX[1], envY + cvBelowKnob), module, VibroLFO::RISE_CV_INPUT);
+		cvJack(Vec(colX[2], envY + cvBelowKnob), module, VibroLFO::RELEASE_CV_INPUT);
 
 		// LFO: speed, amplitude, offset.
-		label(colX[0], 33.5f, "SPEED");
-		label(colX[1], 33.5f, "AMP");
-		label(colX[2], 33.5f, "OFFSET");
-		addParam(createParamCentered<MediumKnob>(mm2px(Vec(colX[0], 41.5f)), module, VibroLFO::SPEED_PARAM));
-		addParam(createParamCentered<MediumKnob>(mm2px(Vec(colX[1], 41.5f)), module, VibroLFO::AMPLITUDE_PARAM));
-		addParam(createParamCentered<MediumKnob>(mm2px(Vec(colX[2], 41.5f)), module, VibroLFO::OFFSET_PARAM));
+		const float lfoY = 48.5f;
+		label(colX[0], lfoY - 7.5f, "SPEED");
+		label(colX[1], lfoY - 7.5f, "AMP");
+		label(colX[2], lfoY - 7.5f, "OFFSET");
+		addParam(createParamCentered<MediumKnob>(mm2px(Vec(colX[0], lfoY)), module, VibroLFO::SPEED_PARAM));
+		addParam(createParamCentered<MediumKnob>(mm2px(Vec(colX[1], lfoY)), module, VibroLFO::AMPLITUDE_PARAM));
+		addParam(createParamCentered<MediumKnob>(mm2px(Vec(colX[2], lfoY)), module, VibroLFO::OFFSET_PARAM));
+		cvJack(Vec(colX[0], lfoY + cvBelowKnob), module, VibroLFO::SPEED_CV_INPUT);
+		cvJack(Vec(colX[1], lfoY + cvBelowKnob), module, VibroLFO::AMPLITUDE_CV_INPUT);
+		cvJack(Vec(colX[2], lfoY + cvBelowKnob), module, VibroLFO::OFFSET_CV_INPUT);
 
 		// Jacks: gate and clock in, LFO out.
-		label(colX[0], 52.f, "GATE");
-		label(colX[1], 52.f, "CLOCK");
-		label(colX[2], 52.f, "OUT");
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(colX[0], 60.5f)), module, VibroLFO::GATE_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(colX[1], 60.5f)), module, VibroLFO::CLOCK_INPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(colX[2], 60.5f)), module, VibroLFO::LFO_OUTPUT));
-		addChild(createLightCentered<SmallLight<BrightBlueLight>>(mm2px(Vec(colX[2] + 7.f, 55.f)), module, VibroLFO::OUT_LIGHT));
+		const float ioY = 75.f;
+		label(colX[0], ioY - 8.f, "GATE");
+		label(colX[1], ioY - 8.f, "CLOCK");
+		label(colX[2], ioY - 8.f, "OUT");
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(colX[0], ioY)), module, VibroLFO::GATE_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(colX[1], ioY)), module, VibroLFO::CLOCK_INPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(colX[2], ioY)), module, VibroLFO::LFO_OUTPUT));
+		addChild(createLightCentered<SmallLight<BrightBlueLight>>(mm2px(Vec(colX[2] + 7.f, ioY - 7.5f)), module, VibroLFO::OUT_LIGHT));
 
-		// Mix faders along the bottom, one per waveform, with a drawing of the wave under each.
-		label(35.56f, 73.f, "MIX");
+		// Mix faders along the bottom, one per waveform: a drawing of the wave above each fader,
+		// and its CV jack below.
 		for (int i = 0; i < NUM_WAVES; i++) {
 			float x = 9.56f + i * 13.f;
-			addParam(createLightParamCentered<BlueFader>(mm2px(Vec(x, 92.f)), module, VibroLFO::MIX_PARAM + i, VibroLFO::MIX_LIGHT + i));
-			addChild(new WaveIcon(Vec(x, 110.f), i));
+			addChild(new WaveIcon(Vec(x, 84.f), i));
+			addParam(createLightParamCentered<BlueFader>(mm2px(Vec(x, 100.f)), module, VibroLFO::MIX_PARAM + i, VibroLFO::MIX_LIGHT + i));
+			cvJack(Vec(x, 117.5f), module, VibroLFO::MIX_CV_INPUT + i);
 		}
 	}
 };

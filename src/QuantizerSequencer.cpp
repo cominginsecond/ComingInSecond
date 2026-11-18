@@ -219,9 +219,13 @@ struct PianoKey : app::Switch {
 			stroke = nvgRGB(0x00, 0x00, 0x00);
 		}
 
-		// Columns beyond the sequence length are faded out.
-		if (module && step >= module->displayLength)
-			nvgGlobalAlpha(args.vg, 0.3f);
+		// Columns beyond the sequence length are faded out by darkening toward the black panel.
+		// The colours stay opaque so the white keys' edges don't show through the black keys.
+		if (module && step >= module->displayLength) {
+			const NVGcolor panel = nvgRGB(0x00, 0x00, 0x00);
+			fill = nvgLerpRGBA(panel, fill, 0.3f);
+			stroke = nvgLerpRGBA(panel, stroke, 0.3f);
+		}
 
 		nvgBeginPath(args.vg);
 		nvgRoundedRect(args.vg, 0.4f, 0.4f, box.size.x - 0.8f, box.size.y - 0.8f, 1.2f);

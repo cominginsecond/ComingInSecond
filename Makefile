@@ -1,14 +1,23 @@
 # Path to the Rack SDK (must not contain spaces). Override with: make RACK_DIR=...
 RACK_DIR ?= C:/Rack-SDK
 
-# Where `make install` puts the plugin. LOCALAPPDATA is not passed into MSYS2 login shells.
-LOCALAPPDATA ?= $(shell cygpath -m -F 28)
+# Where `make install` puts the plugin on Windows. LOCALAPPDATA is not passed into MSYS2
+# login shells, so look it up with cygpath when it is missing (MSYS2 only).
+ifeq ($(LOCALAPPDATA),)
+ifneq ($(shell command -v cygpath 2>/dev/null),)
+LOCALAPPDATA := $(shell cygpath -m -F 28)
+endif
+endif
 
-# Workaround: an old zlib1.dll in C:\Windows\System32 breaks the as.exe/ld.exe that gcc
-# invokes from mingw64/x86_64-w64-mingw32/bin. -B makes gcc use the copies in mingw64/bin instead.
+# Local Windows workaround: an old zlib1.dll in C:\Windows\System32 breaks the as.exe/ld.exe
+# that gcc invokes from mingw64/x86_64-w64-mingw32/bin. -B makes gcc use the copies in
+# mingw64/bin instead. Only applied when that folder exists, so other build machines
+# (e.g. the VCV Library's macOS/Linux/Windows toolchain) are unaffected.
 MINGW_BIN ?= C:/msys64/mingw64/bin/
+ifneq ($(wildcard $(MINGW_BIN)as.exe),)
 FLAGS += -B $(MINGW_BIN)
 LDFLAGS += -B $(MINGW_BIN)
+endif
 
 # FLAGS will be passed to both the C and C++ compiler
 FLAGS +=

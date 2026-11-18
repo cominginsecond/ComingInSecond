@@ -83,7 +83,7 @@ struct QuantizerSequencer : Module {
 					string::f("Step %d %s", s + 1, NOTE_NAMES[n]), {"Off", "On"});
 			}
 		}
-		configParam(LENGTH_PARAM, 1.f, NUM_STEPS, NUM_STEPS, "Length", " steps");
+		configParam(LENGTH_PARAM, 1.f, NUM_STEPS, NUM_STEPS, "Length (the most the CV can reach, when patched)", " steps");
 		getParamQuantity(LENGTH_PARAM)->snapEnabled = true;
 
 		configInput(CLOCK_INPUT, "Clock (advance to next step)");
@@ -91,7 +91,7 @@ struct QuantizerSequencer : Module {
 		configInput(CV_INPUT, "CV to quantize (1V/oct)");
 		configInput(SH_INPUT, "Sample & hold gate");
 		configInput(SELECT_INPUT, "Scale select (0-10V across the length; overrides the clock)");
-		configInput(LENGTH_CV_INPUT, string::f("Length CV (0-10V = 1-%d steps; overrides the knob)", NUM_STEPS));
+		configInput(LENGTH_CV_INPUT, "Length CV (0-10V = 1 step up to the LENGTH knob)");
 		configOutput(CV_OUTPUT, "Quantized CV (1V/oct)");
 		configBypass(CV_INPUT, CV_OUTPUT);
 	}
@@ -114,14 +114,13 @@ struct QuantizerSequencer : Module {
 	void process(const ProcessArgs& args) override {
 		if (resetTrigger.process(inputs[RESET_INPUT].getVoltage(), 0.1f, 1.f))
 			step = -1;
-		int length;
+		int length = clamp((int) params[LENGTH_PARAM].getValue(), 1, NUM_STEPS);
 		if (inputs[LENGTH_CV_INPUT].isConnected()) {
-			// A patched length CV replaces the knob: 0-10V is split evenly across 1..NUM_STEPS steps.
+			// A patched length CV sets the length, and the knob becomes its attenuator: 0-10V is
+			// split evenly from 1 step up to the knob's setting.
+			int maxLength = length;
 			float v = inputs[LENGTH_CV_INPUT].getVoltage();
-			length = clamp((int) std::floor(v / 10.f * NUM_STEPS) + 1, 1, NUM_STEPS);
-		}
-		else {
-			length = clamp((int) params[LENGTH_PARAM].getValue(), 1, NUM_STEPS);
+			length = clamp((int) std::floor(v / 10.f * maxLength) + 1, 1, maxLength);
 		}
 		if (clockTrigger.process(inputs[CLOCK_INPUT].getVoltage(), 0.1f, 1.f))
 			step++;

@@ -34,7 +34,7 @@ its jacks in two rows to fit the narrower panel. Everything below applies to all
 | **Piano keys** (4, 8 or 16 columns × 12) | Each column is one step's scale, with C at the bottom. Click a key to add or remove that note. Every column starts as C major. |
 | **Step lights** | The lit LED above a column marks the active step. |
 | **LENGTH** | Number of steps in the sequence, from 1 up to the module's step count (4, 8 or 16). Columns past the length are faded. |
-| **LENGTH CV** (jack under the knob) | Sets the length directly, and the LENGTH knob is ignored while it is patched. 0–10 V is split evenly from 1 step up to the step count (on QSeq 8, each 1.25 V adds a step). |
+| **LENGTH CV** (jack under the knob) | Sets the length while it is patched, and the LENGTH knob becomes its attenuator: 0–10 V is split evenly from 1 step up to the knob's setting. With the knob all the way up, the CV covers every length (on QSeq 8, each 1.25 V adds a step). With the knob at 4, the same 0–10 V covers 1 to 4 steps. |
 
 A white dot on a key marks the note currently being output.
 

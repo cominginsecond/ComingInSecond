@@ -1,7 +1,8 @@
 # Coming in Second
 
 [VCV Rack 2](https://vcvrack.com) modules by **Coming in Second**, also ported to the
-[4ms MetaModule](https://4mscompany.com/metamodule). The plugin currently contains one module, QSeq 8.
+[4ms MetaModule](https://4mscompany.com/metamodule). The plugin currently contains
+[QSeq 4, 8 and 16](#qseq-4-8-and-16).
 
 ## Download
 
@@ -15,7 +16,7 @@
 Only Windows builds of the VCV plugin are available for now. On macOS or Linux, build it
 from source (see [Building](#building)).
 
-## QSeq 8
+## QSeq 4, 8 and 16
 
 <img src="docs/qseq8.png" alt="QSeq 8 panel in VCV Rack" width="300">
 
@@ -23,13 +24,16 @@ QSeq 8 is a sequencer of eight quantizers. Each step has its own scale, set with
 column of piano keys. A clock moves from step to step, and the incoming CV is quantized
 to the scale of the active step.
 
+QSeq 4 (12HP) and QSeq 16 (38HP) are the same module with 4 or 16 steps. QSeq 4 puts
+its jacks in two rows to fit the narrower panel. Everything below applies to all three.
+
 ### Controls
 
 | Control | What it does |
 |---|---|
-| **Piano keys** (8 columns × 12) | Each column is one step's scale, with C at the bottom. Click a key to add or remove that note. Every column starts as C major. |
+| **Piano keys** (4, 8 or 16 columns × 12) | Each column is one step's scale, with C at the bottom. Click a key to add or remove that note. Every column starts as C major. |
 | **Step lights** | The lit LED above a column marks the active step. |
-| **LENGTH** | Number of steps in the sequence, 1–8. Columns past the length are faded. |
+| **LENGTH** | Number of steps in the sequence, from 1 up to the module's step count (4, 8 or 16). Columns past the length are faded. |
 
 A white dot on a key marks the note currently being output.
 

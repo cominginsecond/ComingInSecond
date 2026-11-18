@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 12HP panel: 60.96mm x 128.5mm. Labels and keys are drawn in code (Rack's SVG renderer ignores <text>). -->
+<svg xmlns="http://www.w3.org/2000/svg" width="60.96mm" height="128.5mm" viewBox="0 0 60.96 128.5">
+  <rect x="0" y="0" width="60.96" height="128.5" fill="#000000"/>
+  <!-- rule under the title -->
+  <rect x="4" y="10.6" width="52.96" height="0.35" fill="#ffffff"/>
+  <!-- step controls: clock, reset, length, scale select -->
+  <rect x="5.98" y="73" width="49" height="24" rx="2" fill="none" stroke="#5a5a5a" stroke-width="0.4"/>
+  <!-- quantizer inputs: cv, s&h -->
+  <rect x="8.23" y="98.5" width="24" height="24" rx="2" fill="none" stroke="#5a5a5a" stroke-width="0.4"/>
+  <!-- output -->
+  <rect x="33.73" y="98.5" width="19" height="24" rx="2" fill="#262626" stroke="#ffffff" stroke-width="0.4"/>
+</svg>

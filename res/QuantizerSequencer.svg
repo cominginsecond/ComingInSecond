@@ -5,9 +5,9 @@
   <!-- rule under the title -->
   <rect x="4" y="10.6" width="93.6" height="0.35" fill="#ffffff"/>
   <!-- step controls: clock, reset, length, scale select -->
-  <rect x="3.5" y="84" width="49" height="24" rx="2" fill="none" stroke="#5a5a5a" stroke-width="0.4"/>
+  <rect x="3.5" y="84" width="49" height="26.5" rx="2" fill="none" stroke="#5a5a5a" stroke-width="0.4"/>
   <!-- quantizer inputs: cv, s&h -->
-  <rect x="54" y="84" width="24" height="24" rx="2" fill="none" stroke="#5a5a5a" stroke-width="0.4"/>
+  <rect x="54" y="84" width="24" height="26.5" rx="2" fill="none" stroke="#5a5a5a" stroke-width="0.4"/>
   <!-- output -->
-  <rect x="79.5" y="84" width="19" height="24" rx="2" fill="#262626" stroke="#ffffff" stroke-width="0.4"/>
+  <rect x="79.5" y="84" width="19" height="26.5" rx="2" fill="#262626" stroke="#ffffff" stroke-width="0.4"/>
 </svg>

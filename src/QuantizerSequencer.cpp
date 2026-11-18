@@ -51,6 +51,7 @@ struct QuantizerSequencer : Module {
 		CV_INPUT,
 		SH_INPUT,
 		SELECT_INPUT,
+		LENGTH_CV_INPUT,
 		INPUTS_LEN
 	};
 	enum OutputId {
@@ -90,6 +91,7 @@ struct QuantizerSequencer : Module {
 		configInput(CV_INPUT, "CV to quantize (1V/oct)");
 		configInput(SH_INPUT, "Sample & hold gate");
 		configInput(SELECT_INPUT, "Scale select (0-10V across the length; overrides the clock)");
+		configInput(LENGTH_CV_INPUT, string::f("Length CV (0-10V = 1-%d steps; overrides the knob)", NUM_STEPS));
 		configOutput(CV_OUTPUT, "Quantized CV (1V/oct)");
 		configBypass(CV_INPUT, CV_OUTPUT);
 	}
@@ -112,7 +114,15 @@ struct QuantizerSequencer : Module {
 	void process(const ProcessArgs& args) override {
 		if (resetTrigger.process(inputs[RESET_INPUT].getVoltage(), 0.1f, 1.f))
 			step = -1;
-		int length = clamp((int) params[LENGTH_PARAM].getValue(), 1, NUM_STEPS);
+		int length;
+		if (inputs[LENGTH_CV_INPUT].isConnected()) {
+			// A patched length CV replaces the knob: 0-10V is split evenly across 1..NUM_STEPS steps.
+			float v = inputs[LENGTH_CV_INPUT].getVoltage();
+			length = clamp((int) std::floor(v / 10.f * NUM_STEPS) + 1, 1, NUM_STEPS);
+		}
+		else {
+			length = clamp((int) params[LENGTH_PARAM].getValue(), 1, NUM_STEPS);
+		}
 		if (clockTrigger.process(inputs[CLOCK_INPUT].getVoltage(), 0.1f, 1.f))
 			step++;
 		// Wrap after the last step, or right away if the length was turned down below the current step.
@@ -281,10 +291,16 @@ struct PianoKey : app::Switch {
 #endif
 
 
-/** Where the jacks and the length knob go on each panel size (mm, centres). */
+/** Where the jacks go on each panel size (mm, centres). `length` is the centre of the LENGTH
+knob and its CV jack, which are stacked one above the other. */
 struct JackLayout {
 	Vec clock, reset, length, select, cv, sh, out;
 };
+
+// The LENGTH knob sits this far above `length`, and its CV jack this far below.
+static constexpr float LENGTH_STACK_DY = 4.5f;
+// Each label sits this far above its jack row.
+static constexpr float JACK_LABEL_DY = 11.5f;
 
 /** QSeq 8 (20HP) and QSeq 16 (38HP): one row of jacks along the bottom, centred on the panel. */
 static JackLayout singleRowLayout(float panelWidth) {
@@ -299,7 +315,7 @@ static JackLayout singleRowLayout(float panelWidth) {
 /** QSeq 4 (12HP) is too narrow for one row: step controls above, quantizer jacks below. */
 static JackLayout twoRowLayout() {
 	const float y1 = 89.5f;
-	const float y2 = 115.f;
+	const float y2 = 117.f;
 	return {
 		Vec(12.48f, y1), Vec(24.48f, y1), Vec(36.48f, y1), Vec(48.48f, y1),
 		Vec(14.23f, y2), Vec(26.23f, y2), Vec(43.23f, y2),
@@ -398,10 +414,10 @@ struct QuantizerSequencerWidget : ModuleWidget {
 #endif
 		label(COL_X0 / 2, kbBottom - KEY_H / 2, "C", 8.f);
 
-		// Jacks: step controls | quantizer inputs | output. Each label sits 10 mm above its jack.
+		// Jacks: step controls | quantizer inputs | output.
 		JackLayout j = NUM_STEPS <= 4 ? twoRowLayout() : singleRowLayout(PANEL_W);
 		auto jackLabel = [&](Vec pos, const char* text) {
-			label(pos.x, pos.y - 10.f, text);
+			label(pos.x, pos.y - JACK_LABEL_DY, text);
 		};
 		jackLabel(j.clock, "CLOCK");
 		jackLabel(j.reset, "RESET");
@@ -412,7 +428,8 @@ struct QuantizerSequencerWidget : ModuleWidget {
 		jackLabel(j.out, "OUT");
 		addInput(createInputCentered<PJ301MPort>(mm2px(j.clock), module, QSeq::CLOCK_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(j.reset), module, QSeq::RESET_INPUT));
-		addParam(createParamCentered<SmallKnob>(mm2px(j.length), module, QSeq::LENGTH_PARAM));
+		addParam(createParamCentered<SmallKnob>(mm2px(j.length.plus(Vec(0, -LENGTH_STACK_DY))), module, QSeq::LENGTH_PARAM));
+		addInput(createInputCentered<PJ301MPort>(mm2px(j.length.plus(Vec(0, LENGTH_STACK_DY))), module, QSeq::LENGTH_CV_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(j.select), module, QSeq::SELECT_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(j.cv), module, QSeq::CV_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(j.sh), module, QSeq::SH_INPUT));

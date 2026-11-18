@@ -2,7 +2,7 @@
   "slug": "QuantizerSequencer",
   "name": "Quantizer Sequencer",
   "version": "2.0.0",
-  "license": "proprietary",
+  "license": "GPL-3.0-or-later",
   "brand": "Quantizer Sequencer",
   "author": "",
   "authorEmail": "",

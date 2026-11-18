@@ -21,4 +21,9 @@ done
 for k in black-off black-on; do
 	rsvg-convert -w "$(px 5.8)" -h "$(px 4.4)" "$RES/keys/$k.svg" -o "$OUT/keys/$k.png"
 done
+
+# Silver LENGTH knob face (9 mm). The MetaModule rotates this image.
+mkdir -p "$OUT/knobs"
+rsvg-convert -w "$(px 9)" -h "$(px 9)" "$RES/knobs/silver-knob.svg" -o "$OUT/knobs/silver-knob.png"
+
 echo "Assets written to $OUT/"

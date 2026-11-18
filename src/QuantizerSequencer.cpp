@@ -307,6 +307,22 @@ struct PianoKey : app::Switch {
 #endif
 
 
+#ifdef METAMODULE
+/** Silver metallic knob for the MetaModule, where the stock black knob is hard to see on the black
+panel. The SDK maps res/knobs/silver-knob.svg to metamodule/assets/knobs/silver-knob.png. */
+struct SilverKnob : app::SvgKnob {
+	SilverKnob() {
+		minAngle = -0.83f * M_PI;
+		maxAngle = 0.83f * M_PI;
+		setSvg(Svg::load(asset::plugin(pluginInstance, "res/knobs/silver-knob.svg")));
+	}
+};
+using LengthKnob = SilverKnob;
+#else
+using LengthKnob = RoundSmallBlackKnob;
+#endif
+
+
 /** A text label drawn in code, since panel SVG <text> is not rendered by Rack. */
 struct PanelLabel : TransparentWidget {
 	std::string text;
@@ -431,7 +447,7 @@ struct QuantizerSequencerWidget : ModuleWidget {
 		label(89.f, labelY, "OUT");
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10.f, jackY)), module, QuantizerSequencer::CLOCK_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(22.f, jackY)), module, QuantizerSequencer::RESET_INPUT));
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(34.f, jackY)), module, QuantizerSequencer::LENGTH_PARAM));
+		addParam(createParamCentered<LengthKnob>(mm2px(Vec(34.f, jackY)), module, QuantizerSequencer::LENGTH_PARAM));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(46.f, jackY)), module, QuantizerSequencer::SELECT_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(60.f, jackY)), module, QuantizerSequencer::CV_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(72.f, jackY)), module, QuantizerSequencer::SH_INPUT));

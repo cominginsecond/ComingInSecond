@@ -49,6 +49,7 @@ struct QuantizerSequencer : Module {
 		RESET_INPUT,
 		CV_INPUT,
 		SH_INPUT,
+		SELECT_INPUT,
 		INPUTS_LEN
 	};
 	enum OutputId {
@@ -87,6 +88,7 @@ struct QuantizerSequencer : Module {
 		configInput(RESET_INPUT, "Reset (next clock goes to step 1)");
 		configInput(CV_INPUT, "CV to quantize (1V/oct)");
 		configInput(SH_INPUT, "Sample & hold gate");
+		configInput(SELECT_INPUT, "Scale select (0-10V across the length; overrides the clock)");
 		configOutput(CV_OUTPUT, "Quantized CV (1V/oct)");
 		configBypass(CV_INPUT, CV_OUTPUT);
 	}
@@ -115,6 +117,12 @@ struct QuantizerSequencer : Module {
 		// Wrap after the last step, or right away if the length was turned down below the current step.
 		if (step >= length)
 			step = 0;
+		// A patched select CV picks the step directly: 0-10V is split evenly across steps 1..length.
+		// Writing it into `step` means the clock carries on from here once the cable is removed.
+		if (inputs[SELECT_INPUT].isConnected()) {
+			float v = inputs[SELECT_INPUT].getVoltage();
+			step = clamp((int) std::floor(v / 10.f * length), 0, length - 1);
+		}
 
 		int current = std::max(step, 0);
 		uint16_t mask = scaleMask(current);
@@ -293,18 +301,21 @@ struct QuantizerSequencerWidget : ModuleWidget {
 		label(2.4f, kbBottom - KEY_H / 2, "C", 5.f);
 
 		// Jacks.
-		label(10.f, 92.f, "CLOCK");
-		label(22.f, 92.f, "RESET");
-		label(34.f, 92.f, "LENGTH", 6.f);
-		label(47.f, 92.f, "CV IN");
-		label(59.f, 92.f, "S&H");
-		label(78.f, 92.f, "OUT", 7.f, true);
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10.f, 101.f)), module, QuantizerSequencer::CLOCK_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(22.f, 101.f)), module, QuantizerSequencer::RESET_INPUT));
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(34.f, 101.f)), module, QuantizerSequencer::LENGTH_PARAM));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(47.f, 101.f)), module, QuantizerSequencer::CV_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(59.f, 101.f)), module, QuantizerSequencer::SH_INPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(78.f, 101.f)), module, QuantizerSequencer::CV_OUTPUT));
+		// Step controls | quantizer inputs | output.
+		label(9.f, 92.f, "CLOCK", 6.5f);
+		label(19.5f, 92.f, "RESET", 6.5f);
+		label(30.f, 92.f, "LENGTH", 6.f);
+		label(40.5f, 92.f, "SCALE", 6.5f);
+		label(52.5f, 92.f, "CV IN", 6.5f);
+		label(63.f, 92.f, "S&H", 6.5f);
+		label(79.5f, 92.f, "OUT", 7.f, true);
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(9.f, 101.f)), module, QuantizerSequencer::CLOCK_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(19.5f, 101.f)), module, QuantizerSequencer::RESET_INPUT));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(30.f, 101.f)), module, QuantizerSequencer::LENGTH_PARAM));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(40.5f, 101.f)), module, QuantizerSequencer::SELECT_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(52.5f, 101.f)), module, QuantizerSequencer::CV_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(63.f, 101.f)), module, QuantizerSequencer::SH_INPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(79.5f, 101.f)), module, QuantizerSequencer::CV_OUTPUT));
 	}
 };
 

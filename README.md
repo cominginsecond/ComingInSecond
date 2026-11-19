@@ -49,7 +49,7 @@ A white dot on a key marks the note currently being output.
 | **S&H** | Sample & hold. When patched, the output only updates on each rising edge, and then holds. When unpatched, the output follows the input continuously. |
 | **OUT** | The quantized 1 V/oct CV. It snaps to the nearest enabled note in any octave. If a step has no notes enabled, the input passes through unquantized. |
 
-## VibraLFO
+## VibraLFo
 
 <img src="docs/vibralfo.png" alt="VibraLFO panel in VCV Rack" width="210">
 

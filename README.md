@@ -2,7 +2,7 @@
 
 [VCV Rack 2](https://vcvrack.com) modules by **Coming in Second**, also ported to the
 [4ms MetaModule](https://4mscompany.com/metamodule). The plugin contains
-[QSeq 4, 8 and 16](#qseq-4-8-and-16) and [VibraLFO](#vibralfo).
+[QSeq 4, 8 and 16](#qseq-4-8-and-16) and [VibraLFo](#vibralfo).
 
 ## Download
 
@@ -51,9 +51,9 @@ A white dot on a key marks the note currently being output.
 
 ## VibraLFo
 
-<img src="docs/vibralfo.png" alt="VibraLFO panel in VCV Rack" width="210">
+<img src="docs/vibralfo.png" alt="VibraLFo panel in VCV Rack" width="210">
 
-VibraLFO is an LFO that only runs while a gate is high, or all the time when GATE is unpatched. It waits, fades in, and fades out
+VibraLFo is an LFO that only runs while a gate is high, or all the time when GATE is unpatched. It waits, fades in, and fades out
 again when the gate ends, which makes it good for delayed vibrato. Five faders blend its
 waveforms, and it can sync to a clock.
 

@@ -410,7 +410,7 @@ using SpeedKnob = MediumKnob;
 #else
 struct SpeedKnob : MediumKnob {
 	/** Mouse travel per ratio step, in screen pixels. */
-	static constexpr float PIXELS_PER_STEP = 25.f;
+	static constexpr float PIXELS_PER_STEP = 45.f;
 	float dragTravel = 0.f;
 
 	VibraLFO::SpeedQuantity* speedQuantity() {

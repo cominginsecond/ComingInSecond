@@ -146,13 +146,24 @@ You need:
 
 ```bash
 cd metamodule
-./make-assets.sh        # only needed after changing the SVGs
+./make-assets.sh        # only needed after changing the key, knob or fader SVGs
 cmake --fresh -B build -G Ninja -DMETAMODULE_SDK_DIR=/path/to/metamodule-plugin-sdk
 cmake --build build
 ```
 
 The plugin is written to `metamodule/metamodule-plugins/ComingInSecond-v<version>.mmplugin`,
 using the version from `plugin.json`. That is the file name 4ms requires for releases.
+
+The faceplate PNGs (`metamodule/assets/<slug>.png`) are rendered by VCV Rack, with the
+panel labels and icons baked in. On the MetaModule, every widget that draws itself shows up
+as a "display" in the module's element list, so the modules skip their static labels and
+icons there (`PanelArt` in `src/house_style.hpp`). After changing a panel's SVG, labels
+or layout, run this from the repo root (Windows, needs VCV Rack installed):
+
+```bash
+make dist
+metamodule/bake-panels.sh
+```
 
 The MetaModule build compiles the same source as the VCV build. MetaModule-specific
 code is behind `#ifdef METAMODULE`. On MetaModule, the piano keys are image-based
@@ -171,7 +182,9 @@ All Coming in Second modules live in this one plugin. To add one:
 4. Add the module to `modules` in `plugin.json`, and to `MetaModuleIncludedModules`
    in `metamodule/plugin-mm.json`.
 5. Add the `.cpp` to `target_sources` in `metamodule/CMakeLists.txt`.
-6. Run `metamodule/make-assets.sh` to render the panel PNG.
+6. Add labels and icons with `addPanelArt()`, and call `stripForPanelBaking(this)` at the end
+   of the widget's constructor. Then run `make dist` and `metamodule/bake-panels.sh` to
+   render the MetaModule faceplate.
 
 ## License
 

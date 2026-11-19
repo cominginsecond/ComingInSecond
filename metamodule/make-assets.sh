@@ -11,11 +11,8 @@ mkdir -p "$OUT/keys"
 PX_PER_MM=$(awk 'BEGIN { print 240 / 128.5 }')
 px() { awk -v mm="$1" -v k="$PX_PER_MM" 'BEGIN { printf "%d", mm * k + 0.5 }'; }
 
-# Faceplates: every panel in res/ (one per module), opaque background, exactly 240 px tall.
-for panel in "$RES"/*.svg; do
-	name=$(basename "$panel" .svg)
-	rsvg-convert -h 240 -b black "$panel" -o "$OUT/$name.png"
-done
+# Faceplates (metamodule/assets/<slug>.png) are not made here: metamodule/bake-panels.sh renders
+# them with VCV Rack, so the labels and icons drawn in code are baked in.
 
 # Key frames, sized to the key widgets (white 9.5 x 7 mm, black 5.8 x 4.4 mm).
 for k in white-off white-on; do

@@ -321,7 +321,7 @@ struct VibraLFO : Module {
 
 
 /** A small white drawing of one waveform, shown under its fader. */
-struct WaveIcon : TransparentWidget {
+struct WaveIcon : PanelArt {
 	int wave;
 
 	WaveIcon(Vec centerMm, int wave) {
@@ -467,7 +467,7 @@ struct SpeedKnob : MediumKnob {
 
 struct VibraLFOWidget : ModuleWidget {
 	void label(float xMm, float yMm, std::string text, float size = LABEL_SIZE) {
-		addChild(new PanelLabel(Vec(xMm, yMm), text, size));
+		addPanelArt(this, new PanelLabel(Vec(xMm, yMm), text, size));
 	}
 
 	void cvJack(Vec posMm, Module* module, int input) {
@@ -523,13 +523,16 @@ struct VibraLFOWidget : ModuleWidget {
 		// and its CV jack below.
 		for (int i = 0; i < NUM_WAVES; i++) {
 			float x = 9.56f + i * 13.f;
-			addChild(new WaveIcon(Vec(x, 84.f), i));
+			addPanelArt(this, new WaveIcon(Vec(x, 84.f), i));
 			addParam(createLightParamCentered<BlueFader>(mm2px(Vec(x, 100.f)), module, VibraLFO::MIX_PARAM + i, VibraLFO::MIX_LIGHT + i));
 			cvJack(Vec(x, 117.5f), module, VibraLFO::MIX_CV_INPUT + i);
 		}
 
 		// Added last so it draws over everything else.
 		addChild(new RatioPopup(Vec(35.56f, 7.f), module));
+#ifndef METAMODULE
+		stripForPanelBaking(this);
+#endif
 	}
 };
 

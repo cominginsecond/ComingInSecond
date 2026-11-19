@@ -384,7 +384,7 @@ struct QuantizerSequencerWidget : ModuleWidget {
 	static constexpr float COL_X0 = (PANEL_W - ((NUM_STEPS - 1) * COL_PITCH + KEY_W)) / 2;
 
 	void label(float xMm, float yMm, std::string text, float size = LABEL_SIZE) {
-		addChild(new PanelLabel(Vec(xMm, yMm), text, size));
+		addPanelArt(this, new PanelLabel(Vec(xMm, yMm), text, size));
 	}
 
 #ifdef METAMODULE
@@ -476,6 +476,9 @@ struct QuantizerSequencerWidget : ModuleWidget {
 		addInput(createInputCentered<PJ301MPort>(mm2px(j.cv), module, QSeq::CV_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(j.sh), module, QSeq::SH_INPUT));
 		addOutput(createOutputCentered<PJ301MPort>(mm2px(j.out), module, QSeq::CV_OUTPUT));
+#ifndef METAMODULE
+		stripForPanelBaking(this);
+#endif
 	}
 
 	// "Set notes" menu: chords, scales, copy/paste and clear for each step's column of keys.

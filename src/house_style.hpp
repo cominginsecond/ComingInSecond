@@ -41,9 +41,27 @@ static inline std::shared_ptr<window::Font> loadPanelFont() {
 }
 
 
+/** Static panel art drawn in code: labels and icons that never change. VCV Rack draws them as
+widgets. On the MetaModule they are baked into the faceplate PNGs instead (see
+metamodule/bake-panels.sh), because the MetaModule turns every widget that draws into a
+"display" and lists it in the module's element list. Add these with addPanelArt(). */
+struct PanelArt : TransparentWidget {};
+
+
+/** Adds static panel art to the module widget in VCV Rack. On the MetaModule the art is already
+in the faceplate PNG, so it is discarded. */
+static inline void addPanelArt(ModuleWidget* w, PanelArt* art) {
+#ifdef METAMODULE
+	delete art;
+#else
+	w->addChild(art);
+#endif
+}
+
+
 /** A text label drawn in code, since panel SVG <text> is not rendered by Rack. Positioned by
 its centre, in mm. */
-struct PanelLabel : TransparentWidget {
+struct PanelLabel : PanelArt {
 	std::string text;
 	float fontSize;
 
@@ -110,6 +128,27 @@ struct BlueFader : VCVLightSlider<BrightBlueLight> {
 
 
 /** Adds the four black corner screws. */
+#ifndef METAMODULE
+/** For making the MetaModule faceplates only. When the COMINGINSECOND_BAKE_PANELS environment
+variable is set, each module widget keeps just its panel and PanelArt, so Rack's screenshot
+mode renders the faceplate with its labels and icons. Call at the end of the widget's
+constructor. */
+static inline void stripForPanelBaking(ModuleWidget* w) {
+	if (!std::getenv("COMINGINSECOND_BAKE_PANELS"))
+		return;
+	std::vector<Widget*> remove;
+	for (Widget* child : w->children) {
+		if (child != w->getPanel() && !dynamic_cast<PanelArt*>(child))
+			remove.push_back(child);
+	}
+	for (Widget* child : remove) {
+		w->removeChild(child);
+		delete child;
+	}
+}
+#endif
+
+
 static inline void addScrews(ModuleWidget* w) {
 	w->addChild(createWidget<ScrewBlack>(Vec(RACK_GRID_WIDTH, 0)));
 	w->addChild(createWidget<ScrewBlack>(Vec(w->box.size.x - 2 * RACK_GRID_WIDTH, 0)));

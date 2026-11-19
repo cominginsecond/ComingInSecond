@@ -41,8 +41,8 @@
       ]
     },
     {
-      "slug": "VibroLFO",
-      "name": "VibroLFO",
+      "slug": "VibraLFO",
+      "name": "VibraLFO",
       "description": "Gated LFO with delay, rise and release, clock sync, and a five-waveform mix",
       "tags": [
         "LFO",

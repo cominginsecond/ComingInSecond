@@ -11,5 +11,5 @@ void init(Plugin* p) {
 	p->addModel(modelQuantizerSequencer4);
 	p->addModel(modelQuantizerSequencer);
 	p->addModel(modelQuantizerSequencer16);
-	p->addModel(modelVibroLFO);
+	p->addModel(modelVibraLFO);
 }

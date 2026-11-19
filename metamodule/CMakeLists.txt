@@ -20,7 +20,7 @@ add_library(ComingInSecond STATIC)
 target_sources(ComingInSecond PRIVATE
     ${SOURCE_DIR}/src/plugin.cpp
     ${SOURCE_DIR}/src/QuantizerSequencer.cpp
-    ${SOURCE_DIR}/src/VibroLFO.cpp
+    ${SOURCE_DIR}/src/VibraLFO.cpp
 )
 target_include_directories(ComingInSecond PRIVATE ${SOURCE_DIR}/src)
 

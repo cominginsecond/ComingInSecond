@@ -2,7 +2,7 @@
 
 [VCV Rack 2](https://vcvrack.com) modules by **Coming in Second**, also ported to the
 [4ms MetaModule](https://4mscompany.com/metamodule). The plugin contains
-[QSeq 4, 8 and 16](#qseq-4-8-and-16) and [VibroLFO](#vibrolfo).
+[QSeq 4, 8 and 16](#qseq-4-8-and-16) and [VibraLFO](#vibralfo).
 
 ## Download
 
@@ -49,11 +49,11 @@ A white dot on a key marks the note currently being output.
 | **S&H** | Sample & hold. When patched, the output only updates on each rising edge, and then holds. When unpatched, the output follows the input continuously. |
 | **OUT** | The quantized 1 V/oct CV. It snaps to the nearest enabled note in any octave. If a step has no notes enabled, the input passes through unquantized. |
 
-## VibroLFO
+## VibraLFO
 
-<img src="docs/vibrolfo.png" alt="VibroLFO panel in VCV Rack" width="210">
+<img src="docs/vibralfo.png" alt="VibraLFO panel in VCV Rack" width="210">
 
-VibroLFO is an LFO that only runs while a gate is high. It waits, fades in, and fades out
+VibraLFO is an LFO that only runs while a gate is high, or all the time when GATE is unpatched. It waits, fades in, and fades out
 again when the gate ends, which makes it good for delayed vibrato. Five faders blend its
 waveforms, and it can sync to a clock.
 
@@ -61,11 +61,11 @@ waveforms, and it can sync to a clock.
 
 | Control | What it does |
 |---|---|
-| **DELAY** | Time from the start of the gate until the LFO starts, 0–5 s. A gate shorter than this never starts the LFO. |
-| **RISE** | Time for the LFO to fade in from silence to full AMPLITUDE once it starts, 0–5 s. |
+| **DELAY** | Time from the start of the gate until the LFO starts, 0–2.5 s. A gate shorter than this never starts the LFO. |
+| **RISE** | Time for the LFO to fade in from silence to full AMPLITUDE once it starts, 0–2.5 s. |
 | **RELEASE** | Time for the LFO to fade out after the gate ends, 0–5 s. At 0 it stops immediately. |
-| **SPEED** | LFO rate, 0.05–20 Hz. When CLOCK is patched, it picks a clock ratio instead: 1/8x, 1/4x, 1/2x, 1x, 2x, 4x or 8x. That is how many LFO cycles happen per clock pulse. |
-| **AMP** | Peak level of the LFO, 0–5 V. The knob is tapered so small vibrato depths are easy to set. |
+| **SPEED** | LFO rate, 0.05–20 Hz, with 5 Hz at noon. When CLOCK is patched, the knob clicks between clock ratios instead: 1/8x, 1/4x, 1/2x, 1x, 2x, 4x or 8x. That is how many LFO cycles happen per clock pulse. The ratio shows briefly over the SPEED label as you turn it. |
+| **AMP** | Peak level of the LFO, 0–2.5 V. The knob is tapered so small vibrato depths are easy to set: noon is 0.22 V. |
 | **OFFSET** | Voltage the LFO moves around, −5 to +5 V. This is also the output while the LFO isn't running. |
 | **Mix faders** | One each for triangle, sine, square, ramp up and ramp down, shown by the drawing above each fader. They set the blend proportions. The mix is scaled so its peak never exceeds AMP, however many faders are up. Starts as sine only. |
 
@@ -73,7 +73,7 @@ waveforms, and it can sync to a clock.
 
 | Jack | What it does |
 |---|---|
-| **GATE** | The LFO runs while this is high. Each new gate starts over: delay, then rise. |
+| **GATE** | The LFO runs while this is high. Each new gate starts over: delay, then rise. With nothing patched, the LFO runs all the time. |
 | **CLOCK** | Syncs the LFO. The tempo is measured from the gap between pulses, and the LFO cycle restarts on the beat. When clocked, the LFO stays locked to the beat between gates, instead of starting a fresh cycle on each one. |
 | **OUT** | OFFSET plus the LFO. The LED next to it follows the LFO. |
 
@@ -84,7 +84,8 @@ setting, and the result is limited to the control's range.
 
 | CV jack | Scaling |
 |---|---|
-| **DELAY**, **RISE**, **RELEASE** | +10 V adds the full 5 s. |
+| **DELAY**, **RISE** | +10 V adds the full 2.5 s. |
+| **RELEASE** | +10 V adds the full 5 s. |
 | **SPEED** | 1 V/oct. When clocked, each volt moves one ratio step (each step doubles). |
 | **AMP** | +10 V adds a full turn of the knob. |
 | **OFFSET** | Added volt for volt. |

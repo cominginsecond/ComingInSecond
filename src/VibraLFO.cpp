@@ -479,7 +479,7 @@ struct VibraLFOWidget : ModuleWidget {
 		setPanel(createPanel(asset::plugin(pluginInstance, "res/VibraLFO.svg")));
 		addScrews(this);
 
-		label(35.56f, 6.f, "VIBRALFO", TITLE_SIZE);
+		label(35.56f, 6.f, "VibraLFo", TITLE_SIZE);
 
 		// Three columns of controls. Each knob and fader has its CV jack right under it.
 		const float colX[3] = {14.f, 35.56f, 57.12f};

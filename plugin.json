@@ -45,7 +45,7 @@
     },
     {
       "slug": "VibraLFO",
-      "name": "VibraLFO",
+      "name": "VibraLFo",
       "description": "Gated LFO with delay, rise and release, clock sync, and a five-waveform mix",
       "manualUrl": "https://github.com/cominginsecond/ComingInSecond#vibralfo",
       "tags": [

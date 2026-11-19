@@ -38,6 +38,22 @@ its jacks in two rows to fit the narrower panel. Everything below applies to all
 
 A white dot on a key marks the note currently being output.
 
+### Setting notes from the menu
+
+Right-click the module (on the MetaModule, open **Options** at the bottom of its parameter
+list) and use **Set notes** to set a whole column of keys at once:
+
+- **Step 1, Step 2, …**: each one shows that step's notes. Inside it, pick a root note, then a
+  chord (major, minor, diminished, augmented, sus2, sus4, 7, major 7, minor 7, minor 7 flat 5)
+  or a scale (major, natural minor, harmonic minor, Dorian, Mixolydian, major and minor
+  pentatonic, blues). The step's keys are replaced with exactly those notes.
+  The same submenu has **Copy notes**, **Paste notes**, **Copy to all steps** and **Clear**.
+- **All steps**: the same chords and scales, plus **Paste notes** and **Clear**, applied to
+  every step at once.
+
+Copied notes can be pasted into any QSeq, of any size. In VCV Rack, each menu action can be
+undone with Ctrl+Z.
+
 ### Inputs and output
 
 | Jack | What it does |

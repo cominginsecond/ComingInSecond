@@ -9,6 +9,49 @@ static const bool IS_BLACK[NUM_NOTES] = {false, true, false, true, false, false,
 // Every column starts out as C major.
 static const bool DEFAULT_SCALE[NUM_NOTES] = {true, false, true, false, true, true, false, true, false, true, false, true};
 
+/** A chord or scale for the "Set notes" menu, as semitones above the root. */
+struct NoteSet {
+	const char* name;
+	std::vector<int> intervals;
+};
+
+static const std::vector<NoteSet> CHORDS = {
+	{"Major", {0, 4, 7}},
+	{"Minor", {0, 3, 7}},
+	{"Diminished", {0, 3, 6}},
+	{"Augmented", {0, 4, 8}},
+	{"Sus2", {0, 2, 7}},
+	{"Sus4", {0, 5, 7}},
+	{"7", {0, 4, 7, 10}},
+	{"Major 7", {0, 4, 7, 11}},
+	{"Minor 7", {0, 3, 7, 10}},
+	{"Minor 7 flat 5", {0, 3, 6, 10}},
+};
+
+static const std::vector<NoteSet> SCALES = {
+	{"Major", {0, 2, 4, 5, 7, 9, 11}},
+	{"Natural minor", {0, 2, 3, 5, 7, 8, 10}},
+	{"Harmonic minor", {0, 2, 3, 5, 7, 8, 11}},
+	{"Dorian", {0, 2, 3, 5, 7, 9, 10}},
+	{"Mixolydian", {0, 2, 4, 5, 7, 9, 10}},
+	{"Major pentatonic", {0, 2, 4, 7, 9}},
+	{"Minor pentatonic", {0, 3, 5, 7, 10}},
+	{"Blues", {0, 3, 5, 6, 7, 10}},
+};
+
+/** The pitch classes of `set` built on `root` (0 = C), as a key mask (bit n = pitch class n). */
+static uint16_t noteSetMask(const NoteSet& set, int root) {
+	uint16_t mask = 0;
+	for (int interval : set.intervals)
+		mask |= 1 << ((root + interval) % 12);
+	return mask;
+}
+
+/** One column's keys, copied with "Copy notes" and shared by every QSeq, whatever its size. */
+static uint16_t noteClipboard = 0;
+static bool noteClipboardFull = false;
+
+
 /** Snaps a 1V/oct voltage to the nearest enabled note (bit n of `mask` = pitch class n, 0 = C).
 An empty scale passes the voltage through unchanged. */
 static float quantize(float voltage, uint16_t mask) {
@@ -433,6 +476,135 @@ struct QuantizerSequencerWidget : ModuleWidget {
 		addInput(createInputCentered<PJ301MPort>(mm2px(j.cv), module, QSeq::CV_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(j.sh), module, QSeq::SH_INPUT));
 		addOutput(createOutputCentered<PJ301MPort>(mm2px(j.out), module, QSeq::CV_OUTPUT));
+	}
+
+	// "Set notes" menu: chords, scales, copy/paste and clear for each step's column of keys.
+	// The MetaModule shows these items under the module's Options menu.
+
+	typedef std::vector<std::pair<int, uint16_t>> StepMasks;  // (step, key mask) pairs
+
+	/** Sets each listed step's keys to its mask (bit n = pitch class n). In VCV Rack this is one
+	undoable action named `actionName`. */
+	void setStepMasks(const StepMasks& changes, std::string actionName) {
+		QSeq* m = dynamic_cast<QSeq*>(this->module);
+		if (!m)
+			return;
+#ifndef METAMODULE
+		history::ComplexAction* complex = new history::ComplexAction;
+		complex->name = actionName;
+#endif
+		for (const auto& change : changes) {
+			for (int n = 0; n < NUM_NOTES; n++) {
+				int paramId = QSeq::KEY_PARAM + change.first * NUM_NOTES + n;
+				ParamQuantity* pq = m->getParamQuantity(paramId);
+				float oldValue = pq->getValue();
+				float newValue = (change.second & (1 << n)) ? 1.f : 0.f;
+				if (oldValue == newValue)
+					continue;
+				pq->setValue(newValue);
+#ifndef METAMODULE
+				history::ParamChange* h = new history::ParamChange;
+				h->moduleId = m->id;
+				h->paramId = paramId;
+				h->oldValue = oldValue;
+				h->newValue = newValue;
+				complex->push(h);
+#endif
+			}
+		}
+#ifndef METAMODULE
+		if (complex->isEmpty())
+			delete complex;
+		else
+			APP->history->push(complex);
+#endif
+	}
+
+	/** Every step from 0 to NUM_STEPS - 1, each set to `mask`. */
+	static StepMasks allSteps(uint16_t mask) {
+		StepMasks changes;
+		for (int s = 0; s < NUM_STEPS; s++)
+			changes.push_back(std::make_pair(s, mask));
+		return changes;
+	}
+
+	/** The enabled notes, such as "C E G", for showing a step's keys in the menu. */
+	static std::string noteList(uint16_t mask) {
+		if (mask == 0)
+			return "none";
+		std::string text;
+		for (int n = 0; n < NUM_NOTES; n++) {
+			if (mask & (1 << n))
+				text += (text.empty() ? "" : " ") + std::string(NOTE_NAMES[n]);
+		}
+		return text;
+	}
+
+	/** One submenu per root note, each listing the chords and scales built on it. Picking one
+	calls `apply` with its key mask and a name such as "D Minor 7". */
+	void addNoteSetMenus(Menu* menu, std::function<void(uint16_t, std::string)> apply) {
+		for (int r = 0; r < NUM_NOTES; r++) {
+			menu->addChild(createSubmenuItem(NOTE_NAMES[r], "", [=](Menu* rootMenu) {
+				rootMenu->addChild(createMenuLabel("Chords"));
+				for (size_t i = 0; i < CHORDS.size(); i++) {
+					std::string name = std::string(NOTE_NAMES[r]) + " " + CHORDS[i].name;
+					rootMenu->addChild(createMenuItem(CHORDS[i].name, "", [=]() {
+						apply(noteSetMask(CHORDS[i], r), name + " chord");
+					}));
+				}
+				rootMenu->addChild(new MenuSeparator);
+				rootMenu->addChild(createMenuLabel("Scales"));
+				for (size_t i = 0; i < SCALES.size(); i++) {
+					std::string name = std::string(NOTE_NAMES[r]) + " " + SCALES[i].name;
+					rootMenu->addChild(createMenuItem(SCALES[i].name, "", [=]() {
+						apply(noteSetMask(SCALES[i], r), name + " scale");
+					}));
+				}
+			}));
+		}
+	}
+
+	void appendContextMenu(Menu* menu) override {
+		QSeq* m = dynamic_cast<QSeq*>(this->module);
+		if (!m)
+			return;
+		QuantizerSequencerWidget* self = this;
+
+		menu->addChild(new MenuSeparator);
+		menu->addChild(createMenuLabel("Set notes"));
+		for (int s = 0; s < NUM_STEPS; s++) {
+			menu->addChild(createSubmenuItem(string::f("Step %d", s + 1), noteList(m->scaleMask(s)), [=](Menu* stepMenu) {
+				self->addNoteSetMenus(stepMenu, [=](uint16_t mask, std::string name) {
+					self->setStepMasks(StepMasks{std::make_pair(s, mask)}, string::f("step %d: %s", s + 1, name.c_str()));
+				});
+				stepMenu->addChild(new MenuSeparator);
+				stepMenu->addChild(createMenuItem("Copy notes", "", [=]() {
+					noteClipboard = m->scaleMask(s);
+					noteClipboardFull = true;
+				}));
+				stepMenu->addChild(createMenuItem("Paste notes", noteClipboardFull ? noteList(noteClipboard) : "", [=]() {
+					self->setStepMasks(StepMasks{std::make_pair(s, noteClipboard)}, string::f("paste notes into step %d", s + 1));
+				}, !noteClipboardFull));
+				stepMenu->addChild(createMenuItem("Copy to all steps", "", [=]() {
+					self->setStepMasks(allSteps(m->scaleMask(s)), string::f("copy step %d to all steps", s + 1));
+				}));
+				stepMenu->addChild(createMenuItem("Clear", "", [=]() {
+					self->setStepMasks(StepMasks{std::make_pair(s, (uint16_t) 0)}, string::f("clear step %d", s + 1));
+				}));
+			}));
+		}
+		menu->addChild(createSubmenuItem("All steps", "", [=](Menu* allMenu) {
+			self->addNoteSetMenus(allMenu, [=](uint16_t mask, std::string name) {
+				self->setStepMasks(allSteps(mask), "all steps: " + name);
+			});
+			allMenu->addChild(new MenuSeparator);
+			allMenu->addChild(createMenuItem("Paste notes", noteClipboardFull ? noteList(noteClipboard) : "", [=]() {
+				self->setStepMasks(allSteps(noteClipboard), "paste notes into all steps");
+			}, !noteClipboardFull));
+			allMenu->addChild(createMenuItem("Clear", "", [=]() {
+				self->setStepMasks(allSteps(0), "clear all steps");
+			}));
+		}));
 	}
 };
 

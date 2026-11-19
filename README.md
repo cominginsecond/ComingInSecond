@@ -64,7 +64,7 @@ waveforms, and it can sync to a clock.
 | **DELAY** | Time from the start of the gate until the LFO starts, 0–2.5 s. A gate shorter than this never starts the LFO. |
 | **RISE** | Time for the LFO to fade in from silence to full AMPLITUDE once it starts, 0–2.5 s. |
 | **RELEASE** | Time for the LFO to fade out after the gate ends, 0–5 s. At 0 it stops immediately. |
-| **SPEED** | LFO rate, 0.05–20 Hz, with 5 Hz at noon. When CLOCK is patched, the knob clicks between clock ratios instead: 1/8x, 1/4x, 1/2x, 1x, 2x, 4x or 8x. That is how many LFO cycles happen per clock pulse. The ratio shows briefly over the SPEED label as you turn it. |
+| **SPEED** | LFO rate, 0.05–20 Hz, with 5 Hz at noon. When CLOCK is patched, the knob clicks between clock ratios instead: 1/8x, 1/4x, 1/2x, 1x, 2x, 4x or 8x. That is how many LFO cycles happen per clock pulse. The ratio shows briefly in a white box at the top of the panel as you turn it. |
 | **AMP** | Peak level of the LFO, 0–2.5 V. The knob is tapered so small vibrato depths are easy to set: noon is 0.22 V. |
 | **OFFSET** | Voltage the LFO moves around, −5 to +5 V. This is also the output while the LFO isn't running. |
 | **Mix faders** | One each for triangle, sine, square, ramp up and ramp down, shown by the drawing above each fader. They set the blend proportions. The mix is scaled so its peak never exceeds AMP, however many faders are up. Starts as sine only. |

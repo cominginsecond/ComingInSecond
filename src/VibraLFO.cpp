@@ -314,7 +314,9 @@ struct VibraLFO : Module {
 		float offset = withCv(OFFSET_PARAM, OFFSET_CV_INPUT, 1.f, -10.f, 10.f);
 		outputs[LFO_OUTPUT].setVoltage(offset + lfo);
 		lights[OUT_LIGHT].setBrightness(envelope * (mix + 1.f) / 2.f);
+
 	}
+
 };
 
 
@@ -352,8 +354,9 @@ struct WaveIcon : TransparentWidget {
 };
 
 
-/** When clocked, shows the SPEED knob's clock ratio for a moment after it changes, in a box over
-the SPEED label. */
+/** When clocked, shows the SPEED knob's clock ratio for a moment after it changes: large black
+text in a white box, centered over the top of the panel. It is drawn with nanovg, so it works on
+the MetaModule too (as a graphics display). */
 struct RatioPopup : TransparentWidget {
 	VibraLFO* module;
 	int lastIndex = -1;
@@ -361,7 +364,7 @@ struct RatioPopup : TransparentWidget {
 
 	RatioPopup(Vec centerMm, VibraLFO* module) {
 		this->module = module;
-		box.size = mm2px(Vec(14.f, 5.f));
+		box.size = mm2px(Vec(32.f, 11.f));
 		box.pos = mm2px(centerMm).minus(box.size.div(2));
 	}
 
@@ -389,12 +392,12 @@ struct RatioPopup : TransparentWidget {
 		if (!font || font->handle < 0)
 			return;
 		nvgBeginPath(args.vg);
-		nvgRoundedRect(args.vg, 0, 0, box.size.x, box.size.y, 2.f);
-		nvgFillColor(args.vg, COLOR_BLUE_DARK);
+		nvgRoundedRect(args.vg, 0, 0, box.size.x, box.size.y, 3.f);
+		nvgFillColor(args.vg, nvgRGB(0xff, 0xff, 0xff));
 		nvgFill(args.vg);
 		nvgFontFaceId(args.vg, font->handle);
-		nvgFontSize(args.vg, LABEL_SIZE * 1.2f);
-		nvgFillColor(args.vg, COLOR_TEXT);
+		nvgFontSize(args.vg, 26.f);
+		nvgFillColor(args.vg, nvgRGB(0x00, 0x00, 0x00));
 		nvgTextAlign(args.vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
 		nvgText(args.vg, box.size.x / 2, box.size.y / 2, RATIO_LABELS[lastIndex], NULL);
 	}
@@ -505,7 +508,6 @@ struct VibraLFOWidget : ModuleWidget {
 		cvJack(Vec(colX[0], lfoY + cvBelowKnob), module, VibraLFO::SPEED_CV_INPUT);
 		cvJack(Vec(colX[1], lfoY + cvBelowKnob), module, VibraLFO::AMPLITUDE_CV_INPUT);
 		cvJack(Vec(colX[2], lfoY + cvBelowKnob), module, VibraLFO::OFFSET_CV_INPUT);
-		addChild(new RatioPopup(Vec(colX[0], lfoY - 7.5f), module));
 
 		// Jacks: gate and clock in, LFO out.
 		const float ioY = 75.f;
@@ -525,6 +527,9 @@ struct VibraLFOWidget : ModuleWidget {
 			addParam(createLightParamCentered<BlueFader>(mm2px(Vec(x, 100.f)), module, VibraLFO::MIX_PARAM + i, VibraLFO::MIX_LIGHT + i));
 			cvJack(Vec(x, 117.5f), module, VibraLFO::MIX_CV_INPUT + i);
 		}
+
+		// Added last so it draws over everything else.
+		addChild(new RatioPopup(Vec(35.56f, 7.f), module));
 	}
 };
 

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 10HP panel: 50.8mm x 128.5mm. Labels, faders, knobs, switches, jacks and icons are added in code. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="50.8mm" height="128.5mm" viewBox="0 0 50.8 128.5">
+  <rect x="0" y="0" width="50.8" height="128.5" fill="#000000"/>
+  <!-- rule under the title -->
+  <rect x="4" y="10.6" width="42.8" height="0.35" fill="#ffffff"/>
+  <!-- osc mode: buttons and display -->
+  <rect x="3" y="11.6" width="44.8" height="16" rx="2" fill="none" stroke="#5a5a5a" stroke-width="0.4"/>
+  <!-- faders, speed knobs and switches -->
+  <rect x="2" y="28.2" width="46.8" height="60.8" rx="2" fill="none" stroke="#5a5a5a" stroke-width="0.4"/>
+  <!-- SWEEP fader to its SPEED knob, LFO fader to its SPEED knob -->
+  <rect x="6.425" y="60.5" width="0.35" height="7" fill="#5a5a5a"/>
+  <rect x="44.025" y="60.5" width="0.35" height="7" fill="#5a5a5a"/>
+  <!-- inputs -->
+  <rect x="2" y="90.5" width="46.8" height="33" rx="2" fill="none" stroke="#5a5a5a" stroke-width="0.4"/>
+  <!-- output -->
+  <rect x="38.4" y="106.5" width="11.6" height="16.2" rx="2" fill="#262626" stroke="#ffffff" stroke-width="0.4"/>
+</svg>

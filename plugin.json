@@ -52,6 +52,15 @@
         "LFO",
         "Envelope generator"
       ]
+    },
+    {
+      "slug": "SynnDrum",
+      "name": "SynnDrum",
+      "description": "Analog-style drum synth voice: two oscillators and noise in six modes, sweep, LFO and S/H, with a dynamic trigger",
+      "tags": [
+        "Drum",
+        "Synth voice"
+      ]
     }
   ]
 }

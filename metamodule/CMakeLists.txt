@@ -21,6 +21,7 @@ target_sources(ComingInSecond PRIVATE
     ${SOURCE_DIR}/src/plugin.cpp
     ${SOURCE_DIR}/src/QuantizerSequencer.cpp
     ${SOURCE_DIR}/src/VibraLFO.cpp
+    ${SOURCE_DIR}/src/SynnDrum.cpp
 )
 target_include_directories(ComingInSecond PRIVATE ${SOURCE_DIR}/src)
 

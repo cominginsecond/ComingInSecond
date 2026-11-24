@@ -1,14 +1,13 @@
 #include "house_style.hpp"
 
 
-// BLOOTH: a double-pulse waveshaper modelled on the AI Synthesis AI012 Wave Animator (itself
-// derived from Ian Fritz's Double-Pulse Waveform Generator). Each cycle of the input wave makes
-// two pulses: the first comes from a comparator, the second from a window comparator that a
-// DISTANCE control moves away from the first. The second pulse goes through a VCA that is open
-// only while that pulse is high, so its height (AMP, plus AMP CV) can be positive or negative.
+// BLOOTH: a waveshape animator. Each cycle of the input wave makes two pulses: the first comes
+// from a comparator, the second from a window comparator that a DISTANCE control moves away from
+// the first. The second pulse goes through a VCA that is open only while that pulse is high, so
+// its height (AMP, plus AMP CV) can be positive or negative.
 //
-// The DSP follows the circuit stage by stage, with the schematic's resistor values. Op amps clip at
-// RAIL. Component names (IC1C, R13...) refer to the AI012 DIY schematic.
+// The DSP models an analog circuit stage by stage, with its resistor values. Op amps clip at
+// RAIL. Component names (IC1C, R13...) label the parts of that circuit each stage models.
 
 static const float RAIL = 10.5f;             // TL074 output swing on +/-12 V
 static const float DIODE_DROP = 0.6f;        // 1N4148 after each pulse comparator (D3, D4)

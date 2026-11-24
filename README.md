@@ -2,7 +2,7 @@
 
 [VCV Rack 2](https://vcvrack.com) modules by **Coming in Second**, also ported to the
 [4ms MetaModule](https://4mscompany.com/metamodule). The plugin contains
-[QSeq 4, 8 and 16](#qseq-4-8-and-16) and [VibraLFo](#vibralfo).
+[QSeq 4, 8 and 16](#qseq-4-8-and-16), [VibraLFo](#vibralfo) and [BLOOTH](#blooth).
 
 ## Download
 
@@ -106,6 +106,56 @@ setting, and the result is limited to the control's range.
 | **AMP** | +10 V adds a full turn of the knob. |
 | **OFFSET** | Added volt for volt. |
 | **Mix faders** | +10 V adds the full fader travel. The fader's light shows the resulting level. |
+
+## BLOOTH
+
+<img src="docs/blooth.png" alt="BLOOTH panel in VCV Rack" width="150">
+
+BLOOTH is a waveshape animator. It turns each cycle of an incoming wave into two pulses.
+The first is always the same height. The second can sit apart from the first, butt up
+against it to make a staircase, or overlap it, and it can be positive or negative. Moving
+the controls, especially with CV, animates the shape. At audio rates it's a source of new
+timbres. At LFO rates the two pulses work as a pair of triggers per cycle, with CV moving
+the second one in time.
+
+The input should be a wave that rises and falls smoothly: a saw, triangle or sine at
+±5 V. A square wave only jumps between two levels, so it won't make the second pulse.
+
+### Where the pulses go
+
+The pulses are placed by the input's voltage rather than by time. Pulse 1 is high while
+the input is near the bottom of its range, from −5 V up to a level set by WIDTH. Pulse 2
+is high while the input is inside a window of the same width, higher up by an amount set
+by DIST. With a rising saw, pulse 1 comes at the start of each cycle and pulse 2 follows
+it. A triangle or sine passes through the same levels on the way back down, so the pulses
+repeat in mirror image, for four per cycle.
+
+### Controls
+
+| Control | What it does |
+|---|---|
+| **WIDTH** | The width of both pulses. At 0 there is no output. At full, each pulse covers about half of a ±5 V input's range. |
+| **DIST** | How far pulse 2 is from pulse 1. At 0, pulse 2 lands on top of pulse 1. With DIST at the same setting as WIDTH, the pulses touch, making a staircase. Above that they separate. |
+| **AMP** | The height and polarity of pulse 2: about −4.4 V fully counterclockwise, nothing at noon, about +4.4 V fully clockwise. Pulse 1 is always about +5.25 V. Where the pulses overlap, the output can't rise above pulse 1's level, so only a negative pulse 2 shows there. |
+| **Small knobs** (under each big knob) | How much of the CV jack below is added to that control. |
+| **Lights 1 and 2** | Light while each pulse is high (on the first channel). |
+
+### Inputs and output
+
+| Jack | What it does |
+|---|---|
+| **IN** | The wave to reshape. Polyphonic. With nothing patched it reads 0 V, so the output holds steady, usually at 0 V. |
+| **WIDTH**, **DIST**, **AMP** CV (bottom of each column) | Added to the control's knob, scaled by the small knob above. Polyphonic. |
+| **OUT** | The double pulse. It has as many channels as the input with the most channels. |
+
+### CV scaling
+
+With the small knob turned all the way up:
+
+| CV jack | Scaling |
+|---|---|
+| **WIDTH**, **DIST** | +5 V adds a full turn of the knob. Negative CV can push WIDTH down to no output. |
+| **AMP** | About +6 V adds a full turn of the knob. A larger CV can't take pulse 2 past its maximum height. |
 
 ## Installing
 

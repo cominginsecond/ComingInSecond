@@ -56,7 +56,8 @@
     {
       "slug": "Blooth",
       "name": "BLOOTH",
-      "description": "Analog-style double-pulse waveshaper: two pulses per input cycle, with width, distance and a bipolar second-pulse amplitude",
+      "description": "Waveshape animator: turns each cycle of a wave into two pulses, with width, distance and a bipolar second-pulse amplitude",
+      "manualUrl": "https://github.com/cominginsecond/ComingInSecond#blooth",
       "tags": [
         "Waveshaper",
         "Polyphonic"

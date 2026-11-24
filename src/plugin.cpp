@@ -12,4 +12,5 @@ void init(Plugin* p) {
 	p->addModel(modelQuantizerSequencer);
 	p->addModel(modelQuantizerSequencer16);
 	p->addModel(modelVibraLFO);
+	p->addModel(modelBlooth);
 }

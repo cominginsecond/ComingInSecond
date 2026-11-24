@@ -426,6 +426,10 @@
           "Ramp down"
         ]
       }
+    },
+    {
+      "slug": "Blooth",
+      "name": "BLOOTH"
     }
   ]
 }

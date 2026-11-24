@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 10HP panel: 50.8mm x 128.5mm. Labels, knobs, jacks, lights and the pulse drawing are added in code. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="50.8mm" height="128.5mm" viewBox="0 0 50.8 128.5">
+  <rect x="0" y="0" width="50.8" height="128.5" fill="#000000"/>
+  <!-- rule under the title -->
+  <rect x="4" y="10.6" width="42.8" height="0.35" fill="#ffffff"/>
+  <!-- controls: knob, CV amount and CV jack for width, distance and amplitude -->
+  <rect x="2" y="12.5" width="46.8" height="48" rx="2" fill="none" stroke="#5a5a5a" stroke-width="0.4"/>
+  <!-- column dividers -->
+  <rect x="17.325" y="15" width="0.35" height="43" fill="#3a3a3a"/>
+  <rect x="33.125" y="15" width="0.35" height="43" fill="#3a3a3a"/>
+  <!-- zoetrope drawing and pulse lights -->
+  <rect x="2" y="64" width="46.8" height="34.5" rx="2" fill="none" stroke="#5a5a5a" stroke-width="0.4"/>
+  <!-- input -->
+  <rect x="3" y="100" width="18" height="21" rx="2" fill="none" stroke="#5a5a5a" stroke-width="0.4"/>
+  <!-- output -->
+  <rect x="29.8" y="100" width="18" height="21" rx="2" fill="#262626" stroke="#ffffff" stroke-width="0.4"/>
+</svg>

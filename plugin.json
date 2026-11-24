@@ -52,6 +52,15 @@
         "LFO",
         "Envelope generator"
       ]
+    },
+    {
+      "slug": "Blooth",
+      "name": "BLOOTH",
+      "description": "Analog-style double-pulse waveshaper: two pulses per input cycle, with width, distance and a bipolar second-pulse amplitude",
+      "tags": [
+        "Waveshaper",
+        "Polyphonic"
+      ]
     }
   ]
 }

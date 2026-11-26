@@ -99,11 +99,13 @@ struct Blooth : Module {
 		configParam(DISTANCE_ATT_PARAM, 0.f, 1.f, 0.f, "Distance CV amount", "%", 0.f, 100.f);
 		configParam(AMP_PARAM, -1.f, 1.f, 0.5f, "Pulse 2 amplitude", "%", 0.f, 100.f);
 		configParam(AMP_ATT_PARAM, 0.f, 1.f, 0.f, "Amplitude CV amount", "%", 0.f, 100.f);
-		configInput(WAVE_INPUT, "Wave (saw, triangle or sine, +/-5 V)");
-		configInput(WIDTH_CV_INPUT, "Width CV (+5 V = full knob turn)");
-		configInput(DISTANCE_CV_INPUT, "Distance CV (+5 V = full knob turn)");
-		configInput(AMP_CV_INPUT, "Amplitude CV (about +6 V = full knob turn)");
-		configOutput(OUT_OUTPUT, "Double pulse");
+		// Short names, with the details in each jack's description (shown under the name in Rack's
+		// tooltip).
+		configInput(WAVE_INPUT, "In")->description = "Wave to animate: saw, triangle or sine, +/-5 V";
+		configInput(WIDTH_CV_INPUT, "Width CV")->description = "+5 V = full knob turn";
+		configInput(DISTANCE_CV_INPUT, "Distance CV")->description = "+5 V = full knob turn";
+		configInput(AMP_CV_INPUT, "Amplitude CV")->description = "About +6 V = full knob turn";
+		configOutput(OUT_OUTPUT, "Out")->description = "Double pulse";
 		configLight(PULSE1_LIGHT, "Pulse 1");
 		configLight(PULSE2_LIGHT, "Pulse 2");
 	}

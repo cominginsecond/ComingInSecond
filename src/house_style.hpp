@@ -60,15 +60,18 @@ static inline void addPanelArt(ModuleWidget* w, PanelArt* art) {
 
 
 /** A text label drawn in code, since panel SVG <text> is not rendered by Rack. Positioned by
-its centre, in mm. */
+its centre, in mm. degrees turns it clockwise about its centre: -90 runs it up the panel, reading
+from bottom to top. */
 struct PanelLabel : PanelArt {
 	std::string text;
 	float fontSize;
+	float degrees;
 
-	PanelLabel(Vec centerMm, std::string text, float fontSize) {
+	PanelLabel(Vec centerMm, std::string text, float fontSize, float degrees = 0.f) {
 		this->text = text;
 		this->fontSize = fontSize;
-		box.size = mm2px(Vec(20.f, 6.f));
+		this->degrees = degrees;
+		box.size = mm2px(degrees == 0.f ? Vec(20.f, 6.f) : Vec(6.f, 45.f));
 		box.pos = mm2px(centerMm).minus(box.size.div(2));
 	}
 
@@ -80,7 +83,11 @@ struct PanelLabel : PanelArt {
 		nvgFontSize(args.vg, fontSize);
 		nvgFillColor(args.vg, COLOR_TEXT);
 		nvgTextAlign(args.vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
-		nvgText(args.vg, box.size.x / 2, box.size.y / 2, text.c_str(), NULL);
+		nvgSave(args.vg);
+		nvgTranslate(args.vg, box.size.x / 2, box.size.y / 2);
+		nvgRotate(args.vg, nvgDegToRad(degrees));
+		nvgText(args.vg, 0, 0, text.c_str(), NULL);
+		nvgRestore(args.vg);
 	}
 };
 

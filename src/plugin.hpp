@@ -13,3 +13,4 @@ extern Model* modelQuantizerSequencer;
 extern Model* modelQuantizerSequencer16;
 extern Model* modelVibraLFO;
 extern Model* modelBlooth;
+extern Model* modelGoBetween;

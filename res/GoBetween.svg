@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 4HP panel: 20.32mm x 128.5mm. The title, labels, knob and jacks are added in code. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="20.32mm" height="128.5mm" viewBox="0 0 20.32 128.5">
+  <rect x="0" y="0" width="20.32" height="128.5" fill="#000000"/>
+  <!-- gain knob -->
+  <rect x="2" y="52" width="16.32" height="23" rx="2" fill="none" stroke="#5a5a5a" stroke-width="0.4"/>
+  <!-- input -->
+  <rect x="2" y="78" width="16.32" height="19.5" rx="2" fill="none" stroke="#5a5a5a" stroke-width="0.4"/>
+  <!-- output -->
+  <rect x="2" y="100" width="16.32" height="19.5" rx="2" fill="#262626" stroke="#ffffff" stroke-width="0.4"/>
+</svg>

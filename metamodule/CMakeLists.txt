@@ -11,7 +11,7 @@ else()
 endif()
 include(${METAMODULE_SDK_DIR}/plugin.cmake)
 
-project(ComingInSecond VERSION 2.3.0 DESCRIPTION "Coming in Second modules for MetaModule" LANGUAGES C CXX ASM)
+project(ComingInSecond VERSION 2.4.0 DESCRIPTION "Coming in Second modules for MetaModule" LANGUAGES C CXX ASM)
 
 # The MetaModule build compiles the same sources as the VCV Rack build.
 set(SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/..)

@@ -67,6 +67,7 @@
       "slug": "GoBetween",
       "name": "GOBETWEEN",
       "description": "Gain stage: one knob turns a signal down or up by as much as 24 dB, with unity at noon",
+      "manualUrl": "https://github.com/cominginsecond/ComingInSecond#gobetween",
       "tags": [
         "Attenuator",
         "Utility",

@@ -2,7 +2,8 @@
 
 [VCV Rack 2](https://vcvrack.com) modules by **Coming in Second**, also ported to the
 [4ms MetaModule](https://4mscompany.com/metamodule). The plugin contains
-[QSeq 4, 8 and 16](#qseq-4-8-and-16), [VibraLFo](#vibralfo) and [BLOOTH](#blooth).
+[QSeq 4, 8 and 16](#qseq-4-8-and-16), [VibraLFo](#vibralfo), [BLOOTH](#blooth) and
+[GOBETWEEN](#gobetween).
 
 ## Download
 
@@ -156,6 +157,35 @@ With the small knob turned all the way up:
 |---|---|
 | **WIDTH**, **DIST** | +5 V adds a full turn of the knob. Negative CV can push WIDTH down to no output. |
 | **AMP** | About +6 V adds a full turn of the knob. A larger CV can't take pulse 2 past its maximum height. |
+
+## GOBETWEEN
+
+<img src="docs/gobetween.png" alt="GOBETWEEN panel in VCV Rack" width="60">
+
+GOBETWEEN is a 4HP gain stage. Its one knob turns a signal down by as much as 24 dB or up
+by as much as 24 dB. At noon the signal passes through unchanged. Use it to bring a quiet
+signal up to a useful level, or to tame a hot one before it goes somewhere else.
+
+### Controls
+
+| Control | What it does |
+|---|---|
+| **GAIN** | −24 dB to +24 dB, with unity (0 dB) at noon, marked **0** on the panel. Fully counterclockwise (**−**) cuts the signal to about 1/16 of its level. Fully clockwise (**+**) boosts it about 16 times. The knob is even in dB, so halfway between noon and either end is 12 dB: about 1/4 or 4 times. |
+
+As you turn the knob, the gain in dB shows in a white box over the title for a moment.
+This works on the MetaModule too. To set an exact value in VCV Rack, right-click the knob
+and type it in.
+
+### Inputs and output
+
+| Jack | What it does |
+|---|---|
+| **IN** | The signal. Audio or CV, polyphonic. |
+| **OUT** | The signal with the gain applied. It has as many channels as IN. |
+
+The output isn't limited. A ±5 V signal boosted by 24 dB swings about ±80 V, far past
+the usual ±12 V, so keep the boost for quiet signals. When the module is bypassed, IN
+passes straight to OUT.
 
 ## Installing
 
